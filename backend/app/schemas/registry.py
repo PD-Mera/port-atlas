@@ -3,7 +3,7 @@ from ipaddress import ip_address
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AfterValidator, Field, HttpUrl, TypeAdapter, field_validator
+from pydantic import AfterValidator, Field, HttpUrl, TypeAdapter, field_validator, model_validator
 
 from app.schemas.common import Record, Schema
 
@@ -74,6 +74,15 @@ class SavedTagsInput(Schema):
         if isinstance(value, list) and all(isinstance(item, str) for item in value):
             return normalize_labels(value)
         return value
+
+
+class ServiceTypeInput(Schema):
+    value: Label
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def normalize_type(cls, value: object) -> object:
+        return value.strip().lower() if isinstance(value, str) else value
 
 
 class ServerRead(ServerInput, Record):
@@ -148,6 +157,7 @@ class ServiceFields(Schema):
     project: Annotated[str, Field(max_length=200)] | None = None
     environment: Annotated[str, Field(max_length=100)] | None = None
     service_type: Annotated[str, Field(max_length=100)] | None = None
+    triton_model_names: list[Name] = Field(default_factory=list, max_length=200)
     status: Status = "unknown"
     container_name: Annotated[str, Field(max_length=255)] | None = None
     docker_image: Annotated[str, Field(max_length=500)] | None = None
@@ -161,6 +171,25 @@ class ServiceFields(Schema):
 
 
 class ServiceInput(ServiceFields):
+    @field_validator("service_type", mode="before")
+    @classmethod
+    def normalize_service_type(cls, value: object) -> object:
+        return (value.strip().lower() or None) if isinstance(value, str) else value
+
+    @field_validator("triton_model_names", mode="before")
+    @classmethod
+    def clean_model_names(cls, value: object) -> object:
+        if isinstance(value, list) and all(isinstance(item, str) for item in value):
+            # Triton model names are case-sensitive; remove exact duplicates only.
+            return list(dict.fromkeys(item.strip() for item in value if item.strip()))
+        return value
+
+    @model_validator(mode="after")
+    def validate_triton_models(self) -> "ServiceInput":
+        if self.triton_model_names and self.service_type != "tritonserver":
+            raise ValueError("Model names chỉ được khai báo cho service type tritonserver")
+        return self
+
     dependency_ids: list[UUID] = Field(default_factory=list, max_length=100)
 
     @field_validator("dependency_ids")

@@ -55,6 +55,8 @@ class Service(IdentityMixin, TimestampMixin, Base):
         CheckConstraint("length(btrim(name)) > 0", name="name_not_blank"),
         CheckConstraint("status IN ('unknown', 'running', 'stopped', 'degraded')", name="status_values"),
         CheckConstraint("access_count >= 0", name="access_count_nonnegative"),
+        CheckConstraint("cardinality(triton_model_names) <= 200", name="triton_model_limit"),
+        CheckConstraint("cardinality(triton_model_names) = 0 OR coalesce(lower(btrim(service_type)), '') = 'tritonserver'", name="triton_models_type"),
         Index("uq_services_server_name_lower", "server_id", func.lower(text("name")), unique=True),
         Index("ix_services_search_text_trgm", "search_text", postgresql_using="gin",
               postgresql_ops={"search_text": "gin_trgm_ops"}),
@@ -67,6 +69,7 @@ class Service(IdentityMixin, TimestampMixin, Base):
     project: Mapped[str | None] = mapped_column(String(200), index=True)
     environment: Mapped[str | None] = mapped_column(String(100), index=True)
     service_type: Mapped[str | None] = mapped_column(String(100))
+    triton_model_names: Mapped[list[str]] = mapped_column(ARRAY(String(200)), default=list, server_default=text("'{}'"))
     status: Mapped[str] = mapped_column(String(20), server_default="unknown")
     container_name: Mapped[str | None] = mapped_column(String(255))
     docker_image: Mapped[str | None] = mapped_column(String(500))
@@ -89,6 +92,14 @@ class Service(IdentityMixin, TimestampMixin, Base):
     tags: Mapped[list["ServiceTag"]] = relationship(back_populates="service", cascade="all, delete-orphan", passive_deletes=True)
     commands: Mapped[list["ServiceCommand"]] = relationship(back_populates="service", cascade="all, delete-orphan", passive_deletes=True)
     endpoints: Mapped[list["ServiceEndpoint"]] = relationship(back_populates="service", cascade="all, delete-orphan", passive_deletes=True)
+
+
+class SavedServiceType(Base):
+    __tablename__ = "saved_service_types"
+    __table_args__ = (
+        CheckConstraint("value = lower(btrim(value)) AND length(value) > 0", name="value_normalized"),
+    )
+    value: Mapped[str] = mapped_column(String(100), primary_key=True)
 
 
 class SavedTag(Base):

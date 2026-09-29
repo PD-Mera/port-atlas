@@ -3,12 +3,44 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_session
-from app.models import SavedTag, Service, ServiceTag
+from app.models import SavedServiceType, SavedTag, Service, ServiceTag
 from app.schemas.common import CatalogItem, Page
-from app.schemas.registry import SavedTagsInput
+from app.schemas.registry import SavedTagsInput, ServiceTypeInput
 from app.services.tags import remember_tags
+from app.services.service_types import remember_service_type
 
 router = APIRouter(tags=["catalog"])
+
+
+@router.get("/service-types", response_model=Page[CatalogItem])
+def list_service_types(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    q: str | None = Query(None, max_length=100),
+    session: Session = Depends(get_session),
+) -> Page[CatalogItem]:
+    filters = []
+    if q and q.strip():
+        filters.append(SavedServiceType.value.contains(q.strip().lower(), autoescape=True))
+    usage_count = select(func.count(Service.id)).where(
+        func.lower(func.btrim(Service.service_type)) == SavedServiceType.value
+    ).correlate(SavedServiceType).scalar_subquery()
+    total = session.scalar(select(func.count()).select_from(SavedServiceType).where(*filters)) or 0
+    rows = session.execute(select(SavedServiceType.value, usage_count.label("count"))
+                           .where(*filters).order_by(SavedServiceType.value)
+                           .offset((page - 1) * page_size).limit(page_size)).all()
+    return Page(items=[CatalogItem(value=value, count=count) for value, count in rows],
+                total=total, page=page, page_size=page_size)
+
+
+@router.post("/service-types", response_model=CatalogItem)
+def save_service_type(payload: ServiceTypeInput, session: Session = Depends(get_session)) -> CatalogItem:
+    remember_service_type(session, payload.value)
+    session.commit()
+    count = session.scalar(select(func.count(Service.id)).where(
+        func.lower(func.btrim(Service.service_type)) == payload.value
+    )) or 0
+    return CatalogItem(value=payload.value, count=count)
 
 
 def _catalog_page(items: list[CatalogItem], total: int, page: int, page_size: int) -> Page[CatalogItem]:

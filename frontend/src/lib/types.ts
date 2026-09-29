@@ -64,6 +64,7 @@ export type ServiceSummary = {
 export type ServiceReference = Pick<ServiceSummary, "id" | "name" | "server_name" | "server_ip" | "status">;
 
 export type Service = ServiceSummary & {
+  triton_model_names: string[];
   dependencies: ServiceReference[];
   dependents: ServiceReference[];
   server: Server;
@@ -111,6 +112,7 @@ export type ServerPayload = {
 };
 
 export type ServicePayload = {
+  triton_model_names: string[];
   dependency_ids: string[];
   server_id: string;
   name: string;

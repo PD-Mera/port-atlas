@@ -51,6 +51,12 @@ Frontend dùng Node.js 22; backend dùng Python 3.12 trở lên theo giới hạ
 
 ## Quy ước dữ liệu
 
+**Service type** là danh sách dùng chung: form cho phép chọn loại đã lưu hoặc nhập loại mới và bấm **+ Thêm** ngay tại chỗ. Loại mới được lưu ngay vào database và tự chọn cho form, kể cả khi chưa lưu dịch vụ. Loại được trim/chuyển về chữ thường; các loại đang có trong dữ liệu được đưa vào catalog qua migration. Danh sách ban đầu gồm `fastapi`, `worker`, `database`, `postgresql`, `redis`, `rabbitmq`, `nginx`, `tritonserver`, `other`. API GET `/api/service-types` trả catalog có phân trang và filter `q`; POST nhận `{ "value": "tritonserver" }`. Tạo/sửa dịch vụ qua API cũng ghi nhớ loại được nhập.
+
+Chọn `tritonserver` sẽ hiện **Triton model names**, bấm **+ Thêm model** để thêm từng dòng hoặc **Xoá** để gỡ. Payload/detail có `triton_model_names: ["yolor", "whisper"]`, tối đa 200 tên, mỗi tên tối đa 200 ký tự. Tên được trim, bỏ dòng rỗng và trùng chính xác; phân biệt chữ hoa/thường. Detail hiển thị danh sách kèm thao tác copy. Khi đổi sang loại khác và lưu, form gửi danh sách rỗng để gỡ model names; API từ chối danh sách không rỗng cho loại khác `tritonserver`. Đây là metadata nhập thủ công, không gọi Triton hoặc load model.
+
+Migration mới nhất là `0004_service_types_triton`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
+
 Tag được lưu trong database dùng chung. Trong form dịch vụ/server, nhập tag (có thể phân cách bằng dấu phẩy) và bấm **Thêm** để lưu vào danh sách và chọn cho form. Lần sau có thể tìm và bấm tag ở mục **Tag đã lưu**. Tag trùng được nhận diện không phân biệt hoa/thường; giữ cách viết đã lưu đầu tiên. Gỡ tag khỏi form hoặc xoá dịch vụ/server không xoá tag khỏi danh sách dùng chung. Bấm Thêm lưu tag ngay cả khi bạn chưa lưu hoặc huỷ form; việc gắn tag vào dịch vụ/server chỉ có hiệu lực sau khi lưu record.
 
 Migration `0003_saved_tags` tạo danh sách và nhập tag đã có trên service/server. GET `/api/tags` giữ response catalog `{value, count}`; `count` là số dịch vụ trực tiếp mang tag (không đếm server), có thể bằng 0. POST `/api/tags` nhận `{ "tags": ["gpu", "asr"] }` và trả danh sách tag với cách viết đã lưu. Tag mới khi tạo/sửa service/server qua API cũng được nhớ lại trong cùng transaction.

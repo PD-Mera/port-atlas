@@ -10,6 +10,7 @@ from app.schemas.common import AccessRead, Page
 from app.schemas.registry import ServiceInput, ServiceRead, ServiceReference, ServiceSummary, Status
 from app.services.registry import service_from_input
 from app.services.tags import remember_tags
+from app.services.service_types import remember_service_type
 
 router = APIRouter(prefix="/services", tags=["services"])
 
@@ -145,6 +146,7 @@ def create_service(payload: ServiceInput, session: Session = Depends(get_session
     service = service_from_input(payload)
     session.add(service)
     remember_tags(session, payload.tags)
+    remember_service_type(session, payload.service_type)
     session.flush()
     session.add_all(ServiceDependency(service_id=service.id, dependency_id=target) for target in payload.dependency_ids)
     session.commit()
@@ -182,6 +184,7 @@ def update_service(service_id: UUID, payload: ServiceInput, session: Session = D
     session.execute(delete(ServiceDependency).where(ServiceDependency.service_id == service_id))
     session.add_all(ServiceDependency(service_id=service_id, dependency_id=target) for target in payload.dependency_ids)
     remember_tags(session, payload.tags)
+    remember_service_type(session, payload.service_type)
     session.commit()
     service = session.scalar(_service_query(service_id))
     if service is None:

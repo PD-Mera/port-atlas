@@ -7,6 +7,7 @@
 - Giữ MVP tập trung vào registry và tìm kiếm. Không tự mở rộng sang monitoring, discovery, server agents hoặc RBAC.
 - Người dùng đã yêu cầu quan hệ phụ thuộc giữa các dịch vụ: có thể triển khai schema/API/form và hiển thị hai chiều; đây chỉ là dữ liệu registry, không điều khiển khởi động hoặc trạng thái container.
 - Tag dùng lại phải lưu trong database dùng chung, không chỉ localStorage. Form dịch vụ/server cho phép bấm chọn tag đã lưu; gỡ tag khỏi record không xoá tag trong danh sách dùng chung.
+- Service type là danh sách dùng chung trong database, cho phép chọn hoặc thêm mới tại form. Với type `tritonserver`, lưu danh sách `triton_model_names` động và hiển thị trên trang chi tiết; chỉ là metadata, không gọi Triton API hoặc tự load model.
 
 ## Quy trình được người dùng yêu cầu
 

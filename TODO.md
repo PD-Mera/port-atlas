@@ -119,6 +119,15 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 - [x] Form service/server có tìm kiếm, phân trang và bấm chọn tag; nhập tag mới rồi bấm Thêm sẽ lưu ngay và chọn cho form.
 - [x] Tài liệu hoá migration và phân biệt lưu tag dùng chung với lưu record; chưa chạy build/test/migration.
 
+## Bổ sung theo yêu cầu: service types và Triton model names
+
+- [x] Migration `0004_service_types_triton`: catalog loại dịch vụ, nhập loại đã có và một số loại mặc định; bổ sung danh sách model name trên service.
+- [x] GET/POST `/api/service-types` để chọn và lưu loại mới dùng chung; chuẩn hoá loại về chữ thường, chống trùng.
+- [x] Form Service type dùng select và thêm loại ngay tại chỗ; lưu loại mới rồi tự chọn, xử lý loading/error.
+- [x] Khi chọn `tritonserver`, thêm/xoá dòng model name động; lưu trong payload, khôi phục khi sửa và hiển thị/copy trong detail.
+- [x] Backend trim/bỏ rỗng/chống trùng tên chính xác, tối đa 200 model, 200 ký tự/tên; không cho lưu model names ở type khác.
+- [x] Cập nhật tài liệu và rà soát tĩnh; chưa chạy migration/build/test.
+
 ## Phase 2 đã lập kế hoạch
 
 Người dùng đã yêu cầu lập kế hoạch monitoring tự động, kể cả service không có `/health`. Kế hoạch và TODO chi tiết nằm trong [MONITORING.md](MONITORING.md): HTTP/HTTPS và TCP trước, protocol adapters/heartbeat sau, cảnh báo là phần tuỳ chọn. Hiện mới lập kế hoạch, chưa triển khai hoặc gọi probe thật.

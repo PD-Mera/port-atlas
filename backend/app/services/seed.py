@@ -7,6 +7,7 @@ from app.models import Server, Service
 from app.schemas.registry import ServerInput, ServiceInput
 from app.services.registry import service_from_input
 from app.services.tags import remember_tags
+from app.services.service_types import remember_service_type
 
 
 def main() -> None:
@@ -56,6 +57,7 @@ def main() -> None:
                 data = ServiceInput(server_id=server.id, environment="demo", status="unknown", **values)
                 session.add(service_from_input(data))
                 remember_tags(session, data.tags)
+                remember_service_type(session, data.service_type)
                 session.flush()
                 created += 1
     print(f"Inserted {created} demo services; existing records were preserved")

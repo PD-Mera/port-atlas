@@ -68,7 +68,7 @@ Nguồn yêu cầu: `PORTATLAS.md`. Đã viết nền tảng mục 1–2, API m�
 
 ## 6. Docker Compose và lưu dữ liệu local
 
-- [x] Viết Dockerfile backend, frontend và `.dockerignore`; frontend dùng production standalone output, backend chạy production server.
+- [x] Viết Dockerfile backend, frontend và `.dockerignore`; Compose development mount source, frontend chạy `next dev`, backend chạy Uvicorn `--reload`.
 - [x] Tạo `compose.yaml` gồm `db`, `migrate`, `backend`, `frontend`; chọn và pin phiên bản image, không dùng `latest`.
 - [x] Chọn PostgreSQL major version và đường dẫn PGDATA tương ứng; bind `./data/postgres` vào đúng thư mục dữ liệu của phiên bản đó.
 - [x] Chỉ publish cổng web có thể cấu hình. Frontend proxy `/api/*` sang backend qua network nội bộ; browser không cần biết hostname container.
@@ -82,7 +82,7 @@ Nguồn yêu cầu: `PORTATLAS.md`. Đã viết nền tảng mục 1–2, API m�
 
 - [x] Viết `README.md`: kiến trúc, cấu hình `.env`, map port, layout dữ liệu và các quyết định MVP.
 - [x] Hướng dẫn lần đầu: clone repo, tạo `.env` và data directories, cấu hình quyền, rồi `docker compose up -d --build` trên server.
-- [x] Hướng dẫn cập nhật: người dùng push code, server pull code, backup database trước migration, chạy Compose build/up và kiểm tra service/logs.
+- [x] Hướng dẫn cập nhật: source tự reload sau git pull; dependency đổi cần rebuild/recreate, backup và chạy migration khi schema đổi; kiểm tra service/logs trên server.
 - [x] Hướng dẫn backup PostgreSQL bằng `pg_dump` vào `./data/backups` và restore bằng công cụ PostgreSQL; không sao chép PGDATA khi database đang chạy.
 - [x] Hướng dẫn xử lý lỗi migration, database permissions, healthcheck, proxy API và cấu hình cổng; nêu migration có thể cần phương án rollback riêng trước cập nhật.
 - [x] Nêu MVP dành cho mạng nội bộ; nếu cần public, cần cấu hình xác thực và HTTPS qua reverse proxy trước khi mở truy cập.

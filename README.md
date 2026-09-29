@@ -6,7 +6,7 @@ Kế hoạch Phase 2 cho monitoring định kỳ, dịch vụ không có `/healt
 
 ## Trạng thái hiện tại
 
-Đã viết nền tảng mục 1–2, API mục 3–4, giao diện MVP mục 5, Docker Compose và tài liệu bàn giao mục 6–7: khung Next.js, khung FastAPI, settings, database models, schema validation, migration ban đầu, CRUD registry, catalog projects/tags, health/readiness, service access counter, search có filter/ranking, command palette, service/server forms, các trang chi tiết, image production và dependency chain của Compose. Chưa xác nhận build hoặc hoạt động runtime trên server.
+Đã viết nền tảng mục 1–2, API mục 3–4, giao diện MVP mục 5, Docker Compose và tài liệu bàn giao mục 6–7: khung Next.js, khung FastAPI, settings, database models, schema validation, migration ban đầu, CRUD registry, catalog projects/tags, health/readiness, service access counter, search có filter/ranking, command palette, service/server forms, các trang chi tiết và Compose development có mount source/tự reload. Chưa xác nhận build hoặc hoạt động runtime trên server.
 
 Không cài dependency, chạy migration, build hoặc test trong giai đoạn viết code này. Các phiên bản dependency trực tiếp được pin từ metadata npm/PyPI; chưa có lockfile và chưa xác minh bằng installation/build. Dependency gián tiếp chưa được khoá.
 
@@ -22,8 +22,8 @@ backend/app/schemas/      Pydantic input/output contracts
 backend/app/routers/      Health, CRUD, catalog và search routes
 backend/app/services/     Aggregate factory, seed, reindex
 backend/migrations/      Alembic revisions và SQL triggers có phiên bản
-backend/Dockerfile       Image production FastAPI/Alembic
-frontend/Dockerfile      Multi-stage Next.js standalone image
+backend/Dockerfile       Image FastAPI/Alembic, Uvicorn reload
+frontend/Dockerfile      Image development chạy next dev
 compose.yaml             db, migrate, backend và frontend
 .dockerignore             Loại runtime data, secrets và build output khỏi context
 .env.example              Biến môi trường mẫu, không chứa secrets thật
@@ -47,7 +47,7 @@ Service `PUT` nhận toàn bộ aggregate và thay thế ports, aliases, tags, e
 
 Frontend giữ `/api/*` cùng origin và dùng rewrite server-side tới `BACKEND_ORIGIN` (mặc định `http://localhost:8000`, Compose sẽ dùng tên service backend). Command palette có focus trap, debounce 180 ms và huỷ request cũ bằng `AbortController`. Service detail chỉ mở link endpoint HTTP/HTTPS, còn commands chỉ có thao tác sao chép.
 
-Frontend dùng Node.js 22; backend dùng Python 3.12 trở lên theo giới hạn trong `pyproject.toml`. Next.js được cấu hình production standalone. Cấu hình Tailwind theo [hướng dẫn Next.js chính thức](https://tailwindcss.com/docs/installation/framework-guides/nextjs); các kiểu PostgreSQL theo [SQLAlchemy PostgreSQL](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html).
+Frontend dùng Node.js 22; backend dùng Python 3.12 trở lên theo giới hạn trong `pyproject.toml`. Compose mặc định chạy development với source mount và tự reload. Cấu hình Tailwind theo [hướng dẫn Next.js chính thức](https://tailwindcss.com/docs/installation/framework-guides/nextjs); các kiểu PostgreSQL theo [SQLAlchemy PostgreSQL](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html).
 
 ## Quy ước dữ liệu
 
@@ -75,12 +75,14 @@ Các lệnh dưới đây là hướng dẫn cho Linux server và chưa được
 db       PostgreSQL 17.5, không publish ra host
 migrate  chạy alembic upgrade head, chỉ chạy sau khi db healthy
 backend  FastAPI/Uvicorn, chỉ có trên network nội bộ
-frontend Next.js standalone, publish duy nhất WEB_PORT
+frontend Next.js dev, publish duy nhất WEB_PORT
 ```
 
 `backend` chỉ khởi động khi `migrate` kết thúc thành công; `frontend` chỉ khởi động khi `/api/readiness` của backend kiểm tra được database. Job `migrate` có `restart: "no"`, còn các service dài hạn dùng `unless-stopped`. Mỗi service dùng log driver `json-file` với giới hạn 10 MB mỗi file và tối đa 5 file.
 
 PostgreSQL dùng image `postgres:17.5-alpine` với `PGDATA=/var/lib/postgresql/data/pgdata`. Bind mount `./data/postgres` vào `/var/lib/postgresql/data`, vì vậy dữ liệu thực tế nằm ở `./data/postgres/pgdata` trên server. Backend và database không publish cổng host; browser gọi `/api/*` cùng origin với frontend, còn rewrite server-side dùng `BACKEND_ORIGIN=http://backend:8000` trong network Compose.
+
+Compose này dành cho development. `./backend` được mount chỉ đọc vào `/app` của backend và migrate; `PYTHONPATH=/app` bảo đảm dùng source mới, Uvicorn `--reload` theo dõi `app/`. `./frontend` được mount vào `/app`, Next.js chạy `next dev` và tự cập nhật khi source thay đổi. Frontend có anonymous volumes riêng cho `/app/node_modules` và `/app/.next` để source mount không che dependency trong image và cache không ghi vào host. Frontend cần quyền ghi thư mục source cho các file Next.js sinh ra (như `next-env.d.ts`); backend không ghi vào source.
 
 ### Lần triển khai đầu tiên
 
@@ -106,7 +108,7 @@ docker compose ps
 docker compose logs --tail=100 migrate backend frontend
 ```
 
-Đặt `POSTGRES_PASSWORD` thành giá trị ngẫu nhiên dài trong `.env`. Không commit `.env`; `.gitignore` đã loại `.env`, `data/`, dependency và build output. `WEB_PORT` là cổng duy nhất publish, mặc định `3000`; `BACKEND_ORIGIN` là biến server-only và không dùng prefix `NEXT_PUBLIC_`. `BACKEND_ORIGIN` được truyền vào build để rewrite của Next.js trỏ đúng `backend`; nếu thay đổi giá trị này, build lại frontend.
+Đặt `POSTGRES_PASSWORD` thành giá trị ngẫu nhiên dài trong `.env` và đặt `APP_ENV=development` (kể cả `.env` đã có từ trước). Không commit `.env`; `.gitignore` đã loại `.env`, `data/`, dependency và build output. `WEB_PORT` là cổng duy nhất publish, mặc định `3000`; `BACKEND_ORIGIN` là biến server-only và không dùng prefix `NEXT_PUBLIC_`. Next.js đọc `BACKEND_ORIGIN` lúc khởi động; nếu đổi `.env`, chạy `docker compose up -d --force-recreate backend frontend` để nạp environment mới.
 
 Kiểm tra nhanh sau khi Compose chạy:
 
@@ -118,16 +120,40 @@ curl -fsS "http://127.0.0.1:3000/api/readiness"
 
 ### Cập nhật sau khi `git pull`
 
-Backup database trước khi image mới chạy migration:
+Lần đầu chuyển từ cấu hình cũ sang development, build/recreate container để áp dụng mounts và lệnh chạy mới:
 
 ```bash
 git pull --ff-only
+docker compose up -d --build --force-recreate --renew-anon-volumes
+```
+
+Sau đó, nếu chỉ thay đổi source backend/frontend, watcher tự reload sau pull; không cần build image:
+
+```bash
+git pull --ff-only
+docker compose logs --tail=100 backend frontend
+```
+
+Nếu đổi `backend/pyproject.toml` hoặc `frontend/package.json`, build lại dependency và recreate container. `--renew-anon-volumes` nạp lại `node_modules` từ image mới và tạo cache Next.js mới; dữ liệu PostgreSQL vẫn nằm trong bind mount `./data/postgres`:
+
+```bash
+docker compose up -d --build --force-recreate --renew-anon-volumes
+```
+
+Nếu đổi migration/schema, dừng ứng dụng, backup trước khi chạy migration rồi khởi động lại. Mount migration mới không tự chạy Alembic. Nếu cũng đổi dependency, rebuild image trước bước `run`:
+
+```bash
+docker compose stop frontend backend
 backup_file="data/backups/portatlas-$(date -u +%Y%m%dT%H%M%SZ).dump"
 docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$backup_file"
-docker compose up -d --build
+docker compose run --rm migrate
+# Chỉ khởi động lại sau khi migrate thành công.
+docker compose up -d
 docker compose ps
 docker compose logs --tail=100 migrate backend frontend
 ```
+
+Thay đổi Compose cần `docker compose up -d` để áp dụng cấu hình. Thay đổi ngoài thư mục backend `app/` cần restart backend nếu watcher không phát hiện. Khi migration và code phụ thuộc schema cùng thay đổi, dừng backend/frontend trước `git pull` để watcher không nạp code mới trên schema cũ.
 
 Migration chạy `alembic upgrade head` theo version và không reset database. Nếu migration lỗi, backend sẽ không khởi động; xem `docker compose logs migrate`, sửa code/cấu hình rồi chạy lại `docker compose up -d migrate` trước khi khởi động backend/frontend.
 
@@ -158,7 +184,7 @@ Không sao chép trực tiếp thư mục `PGDATA` khi PostgreSQL đang chạy. 
 - `migrate` thoát lỗi: đọc `docker compose logs migrate`; kiểm tra password, `POSTGRES_*`, quyền `data/postgres` và quyền tạo extension `pg_trgm`, sau đó chạy lại job migrate.
 - Database không healthy: xem `docker compose logs db`; xác nhận `data/postgres` thuộc UID/GID của user `postgres` trong image và không có process PostgreSQL khác dùng cùng thư mục.
 - Backend không healthy: xem `docker compose logs backend`; kiểm tra migration đã exit code 0 và readiness qua `curl` ở cổng frontend.
-- Frontend không proxy được API: kiểm tra `BACKEND_ORIGIN=http://backend:8000`, build lại frontend và xem `docker compose logs frontend`; không đổi browser sang hostname container.
+- Frontend không proxy được API: kiểm tra `BACKEND_ORIGIN=http://backend:8000`, recreate frontend sau khi đổi `.env` và xem `docker compose logs frontend`; không đổi browser sang hostname container.
 - Cổng web bị chiếm: đổi `WEB_PORT` trong `.env`, rồi chạy lại `docker compose up -d`.
 - Lỗi quyền backup: giữ `data/backups` thuộc user triển khai với mode `750`, không nới quyền toàn host.
 

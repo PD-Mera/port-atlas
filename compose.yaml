@@ -33,13 +33,19 @@ services:
       dockerfile: backend/Dockerfile
     command: ["alembic", "upgrade", "head"]
     environment:
-      APP_ENV: ${APP_ENV:-production}
+      APP_ENV: ${APP_ENV:-development}
+      PYTHONPATH: /app
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set in .env}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set in .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       TZ: ${TZ:-UTC}
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /app
+        read_only: true
     depends_on:
       db:
         condition: service_healthy
@@ -52,13 +58,19 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      APP_ENV: ${APP_ENV:-production}
+      APP_ENV: ${APP_ENV:-development}
+      PYTHONPATH: /app
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set in .env}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set in .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       TZ: ${TZ:-UTC}
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /app
+        read_only: true
     depends_on:
       db:
         condition: service_healthy
@@ -78,12 +90,17 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-      args:
-        BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://backend:8000}
     environment:
       BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://backend:8000}
-      NODE_ENV: production
+      NODE_ENV: development
       TZ: ${TZ:-UTC}
+    volumes:
+      - type: bind
+        source: ./frontend
+        target: /app
+      # Keep image dependencies and Next cache separate from the host source.
+      - /app/node_modules
+      - /app/.next
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
@@ -94,6 +111,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 15s
+      start_period: 60s
     restart: unless-stopped
     logging: *default-logging

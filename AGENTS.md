@@ -17,6 +17,7 @@
 ## Triển khai và dữ liệu
 
 - Dự án chạy trên Linux server bằng Docker Compose; chuẩn bị Dockerfile và `compose.yaml` phù hợp luồng build tại server sau git pull.
+- Compose mặc định chỉ phục vụ development: bind mount source backend/frontend, Uvicorn reload và Next.js dev để source cập nhật sau git pull. Dependency thay đổi cần rebuild image; migration vẫn chạy thủ công có phiên bản. Không tự thêm cấu hình production nếu người dùng chưa yêu cầu.
 - Lưu dữ liệu bền vững bằng bind mount vào thư mục local của dự án, mặc định `./data/postgres`; không dùng named volume cho dữ liệu PostgreSQL.
 - Không commit dữ liệu runtime, backup, secrets hoặc `.env`. Cung cấp `.env.example` với giá trị mẫu và hướng dẫn cấu hình.
 - Không mount Docker socket, không dùng privileged container, không thực thi lệnh SSH/Docker do registry lưu. Các lệnh vận hành chỉ hiển thị và sao chép.

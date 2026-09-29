@@ -51,11 +51,13 @@ Frontend dùng Node.js 22; backend dùng Python 3.12 trở lên theo giới hạ
 
 ## Quy ước dữ liệu
 
-**Service type** là danh sách dùng chung: form cho phép chọn loại đã lưu hoặc nhập loại mới và bấm **+ Thêm** ngay tại chỗ. Loại mới được lưu ngay vào database và tự chọn cho form, kể cả khi chưa lưu dịch vụ. Loại được trim/chuyển về chữ thường; các loại đang có trong dữ liệu được đưa vào catalog qua migration. Danh sách ban đầu gồm `fastapi`, `worker`, `database`, `postgresql`, `redis`, `rabbitmq`, `nginx`, `tritonserver`, `other`. API GET `/api/service-types` trả catalog có phân trang và filter `q`; POST nhận `{ "value": "tritonserver" }`. Tạo/sửa dịch vụ qua API cũng ghi nhớ loại được nhập.
+**Service type** là danh sách dùng chung: form cho phép chọn loại đã lưu hoặc gõ loại mới, sau đó chọn **Tạo mới …** ngay trong dropdown. Loại mới được lưu ngay vào database và tự chọn cho form, kể cả khi chưa lưu dịch vụ. Loại được trim/chuyển về chữ thường; các loại đang có trong dữ liệu được đưa vào catalog qua migration. Danh sách ban đầu gồm `fastapi`, `worker`, `database`, `postgresql`, `redis`, `rabbitmq`, `nginx`, `tritonserver`, `other`. API GET `/api/service-types` trả catalog có phân trang và filter `q`; POST nhận `{ "value": "tritonserver" }`. Tạo/sửa dịch vụ qua API cũng ghi nhớ loại được nhập.
 
 Chọn `tritonserver` sẽ hiện **Triton model names**, bấm **+ Thêm model** để thêm từng dòng hoặc **Xoá** để gỡ. Payload/detail có `triton_model_names: ["yolor", "whisper"]`, tối đa 200 tên, mỗi tên tối đa 200 ký tự. Tên được trim, bỏ dòng rỗng và trùng chính xác; phân biệt chữ hoa/thường. Detail hiển thị danh sách kèm thao tác copy. Khi đổi sang loại khác và lưu, form gửi danh sách rỗng để gỡ model names; API từ chối danh sách không rỗng cho loại khác `tritonserver`. Đây là metadata nhập thủ công, không gọi Triton hoặc load model.
 
 Màn **Service types** ở `/service-types` dùng để quản trị catalog: tìm kiếm, thêm loại và xem số service đang sử dụng. Chỉ loại có usage count bằng 0 mới xoá được; API trả 409 nếu loại đang được tham chiếu. Tên loại được chuẩn hoá chữ thường như khi thêm tại form service.
+
+Các giá trị catalog trong form service dùng combobox có thể gõ: **Project**, **Environment** và **Service type**. Khi gõ giá trị chưa có trong danh sách, dropdown hiện **Tạo mới …**. Project và Environment được ghi vào service khi bấm Lưu; Service type được ghi nhớ ngay khi chọn tạo mới rồi tự điền vào form. Service type không còn nút tạo riêng bên dưới ô chọn. Server vẫn chỉ chọn từ registry; status, protocol, endpoint type và command type vẫn là enum cố định để giữ validation.
 
 Migration mới nhất là `0004_service_types_triton`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
 

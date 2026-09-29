@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 
-import { ApiError, createService, getService, listServers, updateService } from "@/lib/api";
+import { ApiError, createService, getService, listEnvironments, listProjects, listServers, updateService } from "@/lib/api";
 import type { Command, Endpoint, Port, ServerListItem, Service, ServicePayload } from "@/lib/types";
 
 import { FormField } from "./form-field";
 import { DependencyPicker } from "./dependency-picker";
 import { DependencyList } from "./dependency-list";
+import { CatalogCombobox } from "./catalog-combobox";
 import { Repeater } from "./repeater";
 import { TokenEditor } from "./token-editor";
 import { SavedTagEditor } from "./saved-tag-editor";
@@ -117,8 +118,8 @@ export function ServiceForm({ service, title }: { service?: Service; title: stri
     <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7"><h2 className="mb-5 text-lg font-semibold">Thông tin chính</h2><div className="grid gap-5 md:grid-cols-2">
       <FormField id="service-name" label="Tên service" error={fieldErrors.name}><input id="service-name" required value={form.name} onChange={(event) => set("name", event.target.value)} className={inputClass} /></FormField>
       <FormField id="service-server" label="Server" error={fieldErrors.server_id}><select id="service-server" required value={form.server_id} onChange={(event) => set("server_id", event.target.value)} className={inputClass}><option value="">{loadingServers ? "Đang tải server…" : "Chọn server"}</option>{servers.map((server) => <option key={server.id} value={server.id}>{server.name} · {server.ip}</option>)}</select>{selectedServer && <p className="mt-1 text-xs text-slate-500">{selectedServer.service_count} service trên server này</p>}</FormField>
-      <FormField id="service-project" label="Project"><input id="service-project" value={form.project ?? ""} onChange={(event) => set("project", event.target.value)} className={inputClass} /></FormField>
-      <FormField id="service-environment" label="Environment"><input id="service-environment" value={form.environment ?? ""} onChange={(event) => set("environment", event.target.value)} className={inputClass} placeholder="production" /></FormField>
+      <FormField id="service-project" label="Project" error={fieldErrors.project}><CatalogCombobox id="service-project" value={form.project} loadOptions={listProjects} onChange={(value) => set("project", value)} placeholder="Gõ hoặc chọn project…" /></FormField>
+      <FormField id="service-environment" label="Environment" error={fieldErrors.environment}><CatalogCombobox id="service-environment" value={form.environment} loadOptions={listEnvironments} onChange={(value) => set("environment", value)} placeholder="Gõ hoặc chọn environment…" /></FormField>
       <FormField id="service-type" label="Service type" error={fieldErrors.service_type}><ServiceTypePicker value={form.service_type} onChange={(value) => set("service_type", value)} onBusyChange={setSavingType} /></FormField>
       <FormField id="service-status" label="Status"><select id="service-status" value={form.status} onChange={(event) => set("status", event.target.value as ServicePayload["status"])} className={inputClass}>{["unknown", "running", "stopped", "degraded"].map((status) => <option key={status} value={status}>{status}</option>)}</select></FormField>
       <FormField id="service-container" label="Docker container"><input id="service-container" value={form.container_name ?? ""} onChange={(event) => set("container_name", event.target.value)} className={inputClass} /></FormField>

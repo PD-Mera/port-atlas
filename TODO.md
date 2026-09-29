@@ -125,7 +125,7 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 
 - [x] Migration `0004_service_types_triton`: catalog loại dịch vụ, nhập loại đã có và một số loại mặc định; bổ sung danh sách model name trên service.
 - [x] GET/POST `/api/service-types` để chọn và lưu loại mới dùng chung; chuẩn hoá loại về chữ thường, chống trùng.
-- [x] Form Service type dùng select và thêm loại ngay tại chỗ; lưu loại mới rồi tự chọn, xử lý loading/error.
+- [x] Form Service type dùng combobox có thể gõ, chọn type có sẵn hoặc tạo type mới từ option trong dropdown; xử lý loading/error.
 - [x] Khi chọn `tritonserver`, thêm/xoá dòng model name động; lưu trong payload, khôi phục khi sửa và hiển thị/copy trong detail.
 - [x] Backend trim/bỏ rỗng/chống trùng tên chính xác, tối đa 200 model, 200 ký tự/tên; không cho lưu model names ở type khác.
 - [x] Cập nhật tài liệu và rà soát tĩnh; chưa chạy migration/build/test.
@@ -136,6 +136,13 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 - [x] Tạo màn `/service-types` với tìm kiếm, phân trang, thêm type, xác nhận xoá và trạng thái loading/error/empty.
 - [x] Thêm liên kết màn quản trị vào điều hướng chính; giữ form Service type dùng chung cùng catalog.
 - [x] Cập nhật AGENTS/README; chưa chạy build/test/migration.
+
+## Bổ sung theo yêu cầu: combobox cho giá trị catalog
+
+- [x] Tạo combobox dùng chung: gõ để lọc, chọn giá trị có sẵn hoặc chọn “Tạo mới …” ngay trong dropdown.
+- [x] Áp dụng cho Project, Environment và Service type; project/environment được lưu khi lưu service, service type được ghi nhớ ngay khi chọn tạo mới.
+- [x] Loại bỏ ô/nút tạo riêng của Service type; giữ các enum cố định và Server có ràng buộc riêng.
+- [x] Thêm API catalog Environment và cập nhật hướng dẫn; chưa chạy build/test/migration.
 
 ## Phase 2 đã lập kế hoạch
 

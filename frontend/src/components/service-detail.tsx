@@ -39,11 +39,16 @@ export function ServiceDetail({ service, onDelete }: { service: Service; onDelet
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const ssh = useMemo(() => defaultSshCommand(service), [service]);
-  const declaredEndpoints: Endpoint[] = [
-    service.healthcheck_url ? { id: "healthcheck", name: "Healthcheck", url: service.healthcheck_url, endpoint_type: "healthcheck" } : null,
-    service.swagger_url ? { id: "swagger", name: "Swagger", url: service.swagger_url, endpoint_type: "swagger" } : null,
-    service.management_url ? { id: "management", name: "Management", url: service.management_url, endpoint_type: "management" } : null,
-  ].filter((endpoint): endpoint is Endpoint => endpoint !== null);
+  const declaredEndpoints: Endpoint[] = [];
+  if (service.healthcheck_url) {
+    declaredEndpoints.push({ id: "healthcheck", name: "Healthcheck", url: service.healthcheck_url, endpoint_type: "healthcheck" });
+  }
+  if (service.swagger_url) {
+    declaredEndpoints.push({ id: "swagger", name: "Swagger", url: service.swagger_url, endpoint_type: "swagger" });
+  }
+  if (service.management_url) {
+    declaredEndpoints.push({ id: "management", name: "Management", url: service.management_url, endpoint_type: "management" });
+  }
   const endpoints = [...service.endpoints, ...declaredEndpoints];
   const copyUrl = (port: number, protocol: string) => `${protocol === "https" ? "https" : "http"}://${service.server.ip}:${port}`;
   const deleteCurrent = async () => {

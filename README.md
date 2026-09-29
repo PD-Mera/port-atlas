@@ -2,6 +2,8 @@
 
 Registry nội bộ để tra cứu service trên Linux server bằng tên, alias, IP, port, project và tag. Yêu cầu sản phẩm nằm trong [PORTATLAS.md](PORTATLAS.md); checklist triển khai trong [TODO.md](TODO.md).
 
+Kế hoạch Phase 2 cho monitoring định kỳ, dịch vụ không có `/health`, HTTP/TCP probes và lịch sử trạng thái nằm trong [MONITORING.md](MONITORING.md). Đây là kế hoạch chưa triển khai.
+
 ## Trạng thái hiện tại
 
 Đã viết nền tảng mục 1–2, API mục 3–4, giao diện MVP mục 5, Docker Compose và tài liệu bàn giao mục 6–7: khung Next.js, khung FastAPI, settings, database models, schema validation, migration ban đầu, CRUD registry, catalog projects/tags, health/readiness, service access counter, search có filter/ranking, command palette, service/server forms, các trang chi tiết, image production và dependency chain của Compose. Chưa xác nhận build hoặc hoạt động runtime trên server.

@@ -101,3 +101,7 @@ MVP được code xong khi các luồng chính có triển khai đầy đủ cù
 ## Ngoài phạm vi MVP
 
 Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/ports, server agents, import Compose, bulk import/export, RBAC, dependencies và deployment history để giai đoạn sau.
+
+## Phase 2 đã lập kế hoạch
+
+Người dùng đã yêu cầu lập kế hoạch monitoring tự động, kể cả service không có `/health`. Kế hoạch và TODO chi tiết nằm trong [MONITORING.md](MONITORING.md): HTTP/HTTPS và TCP trước, protocol adapters/heartbeat sau, cảnh báo là phần tuỳ chọn. Hiện mới lập kế hoạch, chưa triển khai hoặc gọi probe thật.

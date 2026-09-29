@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
+  // Development access through any IPv4 address on the internal network.
+  allowedDevOrigins: ["*.*.*.*"],
   poweredByHeader: false,
   reactStrictMode: true,
   async rewrites() {

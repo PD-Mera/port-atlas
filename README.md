@@ -55,6 +55,8 @@ Frontend dùng Node.js 22; backend dùng Python 3.12 trở lên theo giới hạ
 
 Chọn `tritonserver` sẽ hiện **Triton model names**, bấm **+ Thêm model** để thêm từng dòng hoặc **Xoá** để gỡ. Payload/detail có `triton_model_names: ["yolor", "whisper"]`, tối đa 200 tên, mỗi tên tối đa 200 ký tự. Tên được trim, bỏ dòng rỗng và trùng chính xác; phân biệt chữ hoa/thường. Detail hiển thị danh sách kèm thao tác copy. Khi đổi sang loại khác và lưu, form gửi danh sách rỗng để gỡ model names; API từ chối danh sách không rỗng cho loại khác `tritonserver`. Đây là metadata nhập thủ công, không gọi Triton hoặc load model.
 
+Màn **Service types** ở `/service-types` dùng để quản trị catalog: tìm kiếm, thêm loại và xem số service đang sử dụng. Chỉ loại có usage count bằng 0 mới xoá được; API trả 409 nếu loại đang được tham chiếu. Tên loại được chuẩn hoá chữ thường như khi thêm tại form service.
+
 Migration mới nhất là `0004_service_types_triton`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
 
 Tag được lưu trong database dùng chung. Trong form dịch vụ/server, nhập tag (có thể phân cách bằng dấu phẩy) và bấm **Thêm** để lưu vào danh sách và chọn cho form. Lần sau có thể tìm và bấm tag ở mục **Tag đã lưu**. Tag trùng được nhận diện không phân biệt hoa/thường; giữ cách viết đã lưu đầu tiên. Gỡ tag khỏi form hoặc xoá dịch vụ/server không xoá tag khỏi danh sách dùng chung. Bấm Thêm lưu tag ngay cả khi bạn chưa lưu hoặc huỷ form; việc gắn tag vào dịch vụ/server chỉ có hiệu lực sau khi lưu record.

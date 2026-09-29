@@ -117,11 +117,15 @@ export function saveTags(tags: string[]): Promise<string[]> {
   return apiRequest<string[]>("/api/tags", { method: "POST", body: JSON.stringify({ tags }) });
 }
 
-export function listServiceTypes(options: { page?: number; signal?: AbortSignal } = {}) {
+export function listServiceTypes(options: { page?: number; q?: string; signal?: AbortSignal } = {}) {
   const { signal, ...query } = options;
   return apiRequest<Page<CatalogItem>>(`/api/service-types${params({ ...query, page_size: 100 })}`, { signal });
 }
 
 export function saveServiceType(value: string): Promise<CatalogItem> {
   return apiRequest<CatalogItem>("/api/service-types", { method: "POST", body: JSON.stringify({ value }) });
+}
+
+export function deleteServiceType(value: string): Promise<void> {
+  return apiRequest<void>(`/api/service-types/${encodeURIComponent(value)}`, { method: "DELETE" });
 }

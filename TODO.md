@@ -130,6 +130,13 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 - [x] Backend trim/bỏ rỗng/chống trùng tên chính xác, tối đa 200 model, 200 ký tự/tên; không cho lưu model names ở type khác.
 - [x] Cập nhật tài liệu và rà soát tĩnh; chưa chạy migration/build/test.
 
+## Bổ sung theo yêu cầu: quản trị service type
+
+- [x] API quản trị GET/POST/DELETE `/api/service-types`; trả usage count và chặn xoá type đang được sử dụng.
+- [x] Tạo màn `/service-types` với tìm kiếm, phân trang, thêm type, xác nhận xoá và trạng thái loading/error/empty.
+- [x] Thêm liên kết màn quản trị vào điều hướng chính; giữ form Service type dùng chung cùng catalog.
+- [x] Cập nhật AGENTS/README; chưa chạy build/test/migration.
+
 ## Phase 2 đã lập kế hoạch
 
 Người dùng đã yêu cầu lập kế hoạch monitoring tự động, kể cả service không có `/health`. Kế hoạch và TODO chi tiết nằm trong [MONITORING.md](MONITORING.md): HTTP/HTTPS và TCP trước, protocol adapters/heartbeat sau, cảnh báo là phần tuỳ chọn. Hiện mới lập kế hoạch, chưa triển khai hoặc gọi probe thật.

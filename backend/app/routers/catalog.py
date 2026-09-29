@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -41,6 +41,24 @@ def save_service_type(payload: ServiceTypeInput, session: Session = Depends(get_
         func.lower(func.btrim(Service.service_type)) == payload.value
     )) or 0
     return CatalogItem(value=payload.value, count=count)
+
+
+@router.delete("/service-types/{value}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_service_type(
+    value: str = Path(min_length=1, max_length=100),
+    session: Session = Depends(get_session),
+) -> None:
+    normalized = value.strip().lower()
+    service_type = session.scalar(select(SavedServiceType).where(SavedServiceType.value == normalized))
+    if service_type is None:
+        raise HTTPException(status_code=404, detail="Service type not found")
+    usage_count = session.scalar(select(func.count(Service.id)).where(
+        func.lower(func.btrim(Service.service_type)) == normalized
+    )) or 0
+    if usage_count:
+        raise HTTPException(status_code=409, detail="Không thể xoá service type đang được sử dụng")
+    session.delete(service_type)
+    session.commit()
 
 
 def _catalog_page(items: list[CatalogItem], total: int, page: int, page_size: int) -> Page[CatalogItem]:

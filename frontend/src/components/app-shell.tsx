@@ -26,6 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <nav aria-label="Điều hướng chính" className="order-3 flex w-full items-center gap-1 overflow-x-auto text-sm sm:order-2 sm:w-auto">
             <Link href="/servers" className="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">Servers</Link>
             <Link href="/catalog" className="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">Projects & tags</Link>
+            <Link href="/service-types" className="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">Service types</Link>
             <Link href="/services/new" className="rounded-lg px-3 py-2 text-blue-700 hover:bg-blue-50">+ Service</Link>
           </nav>
           <button type="button" onClick={() => setPaletteOpen(true)} className="order-2 flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-500 hover:border-blue-300 hover:text-blue-700 sm:order-3"><span>Search</span><kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">Ctrl K</kbd></button>

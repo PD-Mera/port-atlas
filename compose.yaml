@@ -27,7 +27,7 @@ services:
     logging: *default-logging
 
   migrate:
-    image: portatlas-backend:0.1.0
+    image: local/dt/portatlas-backend:0.1.0
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -47,7 +47,7 @@ services:
     logging: *default-logging
 
   backend:
-    image: portatlas-backend:0.1.0
+    image: local/dt/portatlas-backend:0.1.0
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -74,7 +74,7 @@ services:
     logging: *default-logging
 
   frontend:
-    image: portatlas-frontend:0.1.0
+    image: local/dt/portatlas-frontend:0.1.0
     build:
       context: .
       dockerfile: frontend/Dockerfile

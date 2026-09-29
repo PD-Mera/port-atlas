@@ -39,7 +39,7 @@ GET  /api/readiness                      Database readiness
 GET  POST PUT DELETE /api/servers        Server registry
 GET  POST PUT DELETE /api/services       Service aggregate registry
 POST /api/services/{id}/access            Atomic recent/frequency counter
-GET  /api/projects, /api/tags             Catalog values and counts
+GET  /api/projects, /api/tags, /api/owners Catalog values and counts
 GET  /api/search?q=...                    AND search, filters and ranking
 ```
 
@@ -57,9 +57,9 @@ Chọn `tritonserver` sẽ hiện **Triton model names**, bấm **+ Thêm model*
 
 Màn **Service types** ở `/service-types` dùng để quản trị catalog: tìm kiếm, thêm loại và xem số service đang sử dụng. Chỉ loại có usage count bằng 0 mới xoá được; API trả 409 nếu loại đang được tham chiếu. Tên loại được chuẩn hoá chữ thường như khi thêm tại form service.
 
-Các giá trị catalog trong form service dùng combobox có thể gõ: **Project**, **Environment** và **Service type**. Khi gõ giá trị chưa có trong danh sách, dropdown hiện **Tạo mới …**. Project và Environment được ghi vào service khi bấm Lưu; Service type được ghi nhớ ngay khi chọn tạo mới rồi tự điền vào form. Service type không còn nút tạo riêng bên dưới ô chọn. Server vẫn chỉ chọn từ registry; status, protocol, endpoint type và command type vẫn là enum cố định để giữ validation.
+Các giá trị catalog trong form service dùng combobox có thể gõ: **Project**, **Owner** và **Service type**. Khi gõ giá trị chưa có trong danh sách, dropdown hiện **Tạo mới …**. Project và Owner được ghi vào service khi bấm Lưu; Owner lấy các giá trị đã dùng từ `/api/owners`, còn giá trị mới sẽ xuất hiện sau khi service được lưu. Service type được ghi nhớ ngay khi chọn tạo mới rồi tự điền vào form. Environment, Docker container, Docker image và Compose path không còn hiển thị trong form. Run Command và Komodo Path là các trường metadata mới; Working directory vẫn được giữ. Server vẫn chỉ chọn từ registry; status, protocol, endpoint type và command type vẫn là enum cố định để giữ validation.
 
-Migration mới nhất là `0005_search_triton_models`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
+Migration mới nhất là `0006_service_metadata`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
 
 Tag được lưu trong database dùng chung. Trong form dịch vụ/server, nhập tag (có thể phân cách bằng dấu phẩy) và bấm **Thêm** để lưu vào danh sách và chọn cho form. Lần sau có thể tìm và bấm tag ở mục **Tag đã lưu**. Tag trùng được nhận diện không phân biệt hoa/thường; giữ cách viết đã lưu đầu tiên. Gỡ tag khỏi form hoặc xoá dịch vụ/server không xoá tag khỏi danh sách dùng chung. Bấm Thêm lưu tag ngay cả khi bạn chưa lưu hoặc huỷ form; việc gắn tag vào dịch vụ/server chỉ có hiệu lực sau khi lưu record.
 
@@ -102,7 +102,7 @@ Tham khảo [Linear UI refresh](https://linear.app/now/behind-the-latest-design-
 
 ## Search document
 
-Migration `0001_registry` bật `pg_trgm`, tạo `search_text` và generated `search_vector` với cấu hình `simple`, cùng hai GIN indexes. SQL triggers tái tạo document khi thay đổi service, server hoặc ports/aliases/tags/endpoints/commands; migration `0005_search_triton_models` bổ sung Triton model names và trigger khi danh sách model thay đổi. Vì vậy có thể tìm trực tiếp bằng tên model, kể cả dữ liệu đã tồn tại trước migration. Cập nhật search index và lượt truy cập không làm thay đổi thời gian chỉnh sửa registry.
+Migration `0001_registry` bật `pg_trgm`, tạo `search_text` và generated `search_vector` với cấu hình `simple`, cùng hai GIN indexes. SQL triggers tái tạo document khi thay đổi service, server hoặc ports/aliases/tags/endpoints/commands; migration `0005_search_triton_models` bổ sung Triton model names và migration `0006_service_metadata` bổ sung Run Command/Komodo Path. Vì vậy có thể tìm trực tiếp bằng tên model, run command hoặc Komodo path. Cập nhật search index và lượt truy cập không làm thay đổi thời gian chỉnh sửa registry.
 
 Triggers là một phần có phiên bản của migration, không được tạo bằng `Base.metadata.create_all()`. Không dùng create_all thay cho Alembic. Database user chạy migration phải có quyền tạo extension `pg_trgm` hoặc extension phải được quản trị viên cài trước.
 

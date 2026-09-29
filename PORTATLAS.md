@@ -29,9 +29,8 @@ A single search bar should search across:
 - Tags
 - Service type
 - Triton model names when the service type is `tritonserver`
-- Docker container name
-- Docker image
-- Compose path
+- Run Command
+- Komodo Path
 - Working directory
 - Endpoint URLs
 - Notes
@@ -71,15 +70,13 @@ Each service can store:
 - Description
 - Server
 - Project
-- Environment
 - Service type
 - Status
 - Ports
 - Protocols
 - URLs
-- Docker container
-- Docker image
-- Compose path
+- Run Command
+- Komodo Path
 - Working directory
 - Healthcheck URL
 - Swagger/OpenAPI URL
@@ -231,12 +228,10 @@ server_id
 name
 description
 project
-environment
 service_type
-container_name
-docker_image
-compose_path
 working_directory
+run_command
+komodo_path
 healthcheck_url
 swagger_url
 management_url

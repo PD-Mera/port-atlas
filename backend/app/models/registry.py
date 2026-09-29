@@ -75,6 +75,8 @@ class Service(IdentityMixin, TimestampMixin, Base):
     docker_image: Mapped[str | None] = mapped_column(String(500))
     compose_path: Mapped[str | None] = mapped_column(String(2000))
     working_directory: Mapped[str | None] = mapped_column(String(2000))
+    run_command: Mapped[str | None] = mapped_column(Text)
+    komodo_path: Mapped[str | None] = mapped_column(String(2000))
     healthcheck_url: Mapped[str | None] = mapped_column(String(2048))
     swagger_url: Mapped[str | None] = mapped_column(String(2048))
     management_url: Mapped[str | None] = mapped_column(String(2048))

@@ -68,6 +68,30 @@ def list_environments(
                 total=total, page=page, page_size=page_size)
 
 
+@router.get("/owners", response_model=Page[CatalogItem])
+def list_owners(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    q: str | None = Query(None, max_length=200),
+    session: Session = Depends(get_session),
+) -> Page[CatalogItem]:
+    filters = [Service.owner.is_not(None), func.length(func.btrim(Service.owner)) > 0]
+    if q and q.strip():
+        filters.append(func.lower(Service.owner).contains(q.strip().lower(), autoescape=True))
+    grouped = (
+        select(Service.owner.label("value"), func.count(Service.id).label("count"))
+        .where(*filters)
+        .group_by(Service.owner)
+    )
+    total = session.scalar(select(func.count()).select_from(grouped.subquery())) or 0
+    rows = session.execute(
+        grouped.order_by(func.lower(Service.owner), Service.owner)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
+    return _catalog_page([CatalogItem(value=value, count=count) for value, count in rows], total, page, page_size)
+
+
 @router.delete("/service-types/{value}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_service_type(
     value: str = Path(min_length=1, max_length=100),

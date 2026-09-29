@@ -9,7 +9,7 @@
 - Tag dùng lại phải lưu trong database dùng chung, không chỉ localStorage. Form dịch vụ/server cho phép bấm chọn tag đã lưu; gỡ tag khỏi record không xoá tag trong danh sách dùng chung.
 - Service type là danh sách dùng chung trong database, cho phép chọn hoặc thêm mới tại form. Với type `tritonserver`, lưu danh sách `triton_model_names` động và hiển thị trên trang chi tiết; chỉ là metadata, không gọi Triton API hoặc tự load model.
 - Màn quản trị Service type phải cho xem usage count, thêm type và chỉ cho xoá type chưa được service sử dụng; không xoá type đang được tham chiếu.
-- Các trường catalog có thể mở rộng như project, environment và service type dùng combobox: vừa gõ vừa chọn, giá trị mới phải có lựa chọn tạo ngay trong dropdown. Không đặt thêm một khu vực tạo riêng cho service type.
+- Các trường catalog dùng trong form service là project, owner và service type; chúng dùng combobox để vừa gõ vừa chọn, giá trị mới phải có lựa chọn ngay trong dropdown. Environment, Docker container, Docker image và Compose path không còn là lựa chọn trên form; giữ các cột cũ trong API/database để tương thích dữ liệu đã nhập. Không đặt thêm một khu vực tạo riêng cho service type.
 
 ## Quy trình được người dùng yêu cầu
 

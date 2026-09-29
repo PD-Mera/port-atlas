@@ -74,6 +74,8 @@ export type Service = ServiceSummary & {
   description: string | null;
   compose_path: string | null;
   working_directory: string | null;
+  run_command: string | null;
+  komodo_path: string | null;
   healthcheck_url: string | null;
   swagger_url: string | null;
   management_url: string | null;
@@ -127,6 +129,8 @@ export type ServicePayload = {
   docker_image: string | null;
   compose_path: string | null;
   working_directory: string | null;
+  run_command: string | null;
+  komodo_path: string | null;
   healthcheck_url: string | null;
   swagger_url: string | null;
   management_url: string | null;

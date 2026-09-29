@@ -17,9 +17,7 @@ export function ServiceCard({ service, score }: { service: ServiceSummary; score
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
         {service.project && <span className="rounded-md bg-accent-soft px-2 py-1 text-accent">{service.project}</span>}
-        {service.environment && <span className="rounded-md bg-surface-raised px-2 py-1 text-muted">{service.environment}</span>}
         {service.service_type && <span className="rounded-md bg-surface-raised px-2 py-1 text-muted">{service.service_type}</span>}
-        {service.container_name && <span className="max-w-full break-all rounded-md bg-surface-raised px-2 py-1 font-mono text-muted">{service.container_name}</span>}
         {service.tags.map((tag) => <span key={tag} className="rounded-md bg-accent-soft px-2 py-1 text-accent">#{tag}</span>)}
       </div>
       {service.ports.length > 0 && <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">{service.ports.map((port) => <span key={port.id ?? `${port.name}-${port.port}-${port.protocol}`} className="rounded border border-border bg-background/40 px-2 py-1 text-xs"><span className="text-muted">{port.name} </span><span className="font-mono text-foreground">{port.port}</span><span className="text-subtle">/{port.protocol}</span></span>)}</div>}

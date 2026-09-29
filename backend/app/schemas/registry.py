@@ -163,6 +163,8 @@ class ServiceFields(Schema):
     docker_image: Annotated[str, Field(max_length=500)] | None = None
     compose_path: Annotated[str, Field(max_length=2000)] | None = None
     working_directory: Annotated[str, Field(max_length=2000)] | None = None
+    run_command: Annotated[str, Field(max_length=10000)] | None = None
+    komodo_path: Annotated[str, Field(max_length=2000)] | None = None
     healthcheck_url: URL | None = None
     swagger_url: URL | None = None
     management_url: URL | None = None

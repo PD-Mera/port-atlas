@@ -132,6 +132,11 @@ export function listEnvironments(options: { page?: number; q?: string; signal?: 
   return apiRequest<Page<CatalogItem>>(`/api/environments${params({ ...query, page_size: 100 })}`, { signal });
 }
 
+export function listOwners(options: { page?: number; q?: string; signal?: AbortSignal } = {}) {
+  const { signal, ...query } = options;
+  return apiRequest<Page<CatalogItem>>(`/api/owners${params({ ...query, page_size: 100 })}`, { signal });
+}
+
 export function saveServiceType(value: string): Promise<CatalogItem> {
   return apiRequest<CatalogItem>("/api/service-types", { method: "POST", body: JSON.stringify({ value }) });
 }

@@ -153,6 +153,14 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 - [x] Làm mới trang tìm kiếm và card service; hiển thị port rõ hơn, typography và khoảng cách đồng nhất.
 - [x] Bổ sung focus bàn phím, native dark controls và reduced motion; chỉ rà soát tĩnh, chưa build/test hoặc xem preview runtime.
 
+## Bổ sung theo yêu cầu: tinh gọn service form
+
+- [x] Ẩn Environment, Docker container, Docker image và Compose path khỏi form service; giữ các cột API cũ để không làm mất dữ liệu đã nhập.
+- [x] Thêm `run_command` và `komodo_path`, migration `0006_service_metadata`, trigger cập nhật `updated_at` và search document.
+- [x] Thêm `/api/owners` và chuyển Owner thành combobox có thể gõ/chọn/tạo giá trị khi lưu service.
+- [x] Đưa Triton model names ngay dưới Service type khi chọn `tritonserver`; giữ dynamic list và validation hiện có.
+- [x] Cập nhật detail, quick actions và tài liệu; chưa chạy migration/build/test.
+
 ## Phase 2 đã lập kế hoạch
 
 Người dùng đã yêu cầu lập kế hoạch monitoring tự động, kể cả service không có `/health`. Kế hoạch và TODO chi tiết nằm trong [MONITORING.md](MONITORING.md): HTTP/HTTPS và TCP trước, protocol adapters/heartbeat sau, cảnh báo là phần tuỳ chọn. Hiện mới lập kế hoạch, chưa triển khai hoặc gọi probe thật.

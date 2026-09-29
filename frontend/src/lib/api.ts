@@ -107,3 +107,12 @@ export function recordServiceAccess(id: string): Promise<{ id: string; last_acce
 export function listCatalog(kind: "projects" | "tags", signal?: AbortSignal): Promise<Page<CatalogItem>> {
   return apiRequest<Page<CatalogItem>>(`/api/${kind}?page_size=100`, { signal });
 }
+
+export function listSavedTags(options: { q?: string; page?: number; signal?: AbortSignal } = {}) {
+  const { signal, ...query } = options;
+  return apiRequest<Page<CatalogItem>>(`/api/tags${params({ ...query, page_size: 20 })}`, { signal });
+}
+
+export function saveTags(tags: string[]): Promise<string[]> {
+  return apiRequest<string[]>("/api/tags", { method: "POST", body: JSON.stringify({ tags }) });
+}

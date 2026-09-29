@@ -65,6 +65,17 @@ class ServerInput(Schema):
         return value
 
 
+class SavedTagsInput(Schema):
+    tags: list[Label] = Field(min_length=1, max_length=100)
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def clean_tags(cls, value: object) -> object:
+        if isinstance(value, list) and all(isinstance(item, str) for item in value):
+            return normalize_labels(value)
+        return value
+
+
 class ServerRead(ServerInput, Record):
     @field_validator("ip", mode="before")
     @classmethod

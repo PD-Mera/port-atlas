@@ -6,6 +6,7 @@
 - `PORTATLAS.md` là mô tả sản phẩm; `TODO.md` là danh sách triển khai MVP. Cập nhật checkbox theo phần việc thực sự hoàn thành, không đánh dấu phần chưa xác minh là đã chạy thành công.
 - Giữ MVP tập trung vào registry và tìm kiếm. Không tự mở rộng sang monitoring, discovery, server agents hoặc RBAC.
 - Người dùng đã yêu cầu quan hệ phụ thuộc giữa các dịch vụ: có thể triển khai schema/API/form và hiển thị hai chiều; đây chỉ là dữ liệu registry, không điều khiển khởi động hoặc trạng thái container.
+- Tag dùng lại phải lưu trong database dùng chung, không chỉ localStorage. Form dịch vụ/server cho phép bấm chọn tag đã lưu; gỡ tag khỏi record không xoá tag trong danh sách dùng chung.
 
 ## Quy trình được người dùng yêu cầu
 

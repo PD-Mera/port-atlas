@@ -91,6 +91,15 @@ class Service(IdentityMixin, TimestampMixin, Base):
     endpoints: Mapped[list["ServiceEndpoint"]] = relationship(back_populates="service", cascade="all, delete-orphan", passive_deletes=True)
 
 
+class SavedTag(Base):
+    __tablename__ = "saved_tags"
+    __table_args__ = (
+        CheckConstraint("length(btrim(value)) > 0", name="value_not_blank"),
+        Index("uq_saved_tags_value_lower", func.lower(text("value")), unique=True),
+    )
+    value: Mapped[str] = mapped_column(String(100), primary_key=True)
+
+
 class ServiceDependency(Base):
     __tablename__ = "service_dependencies"
     __table_args__ = (

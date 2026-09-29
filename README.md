@@ -51,6 +51,12 @@ Frontend dùng Node.js 22; backend dùng Python 3.12 trở lên theo giới hạ
 
 ## Quy ước dữ liệu
 
+Tag được lưu trong database dùng chung. Trong form dịch vụ/server, nhập tag (có thể phân cách bằng dấu phẩy) và bấm **Thêm** để lưu vào danh sách và chọn cho form. Lần sau có thể tìm và bấm tag ở mục **Tag đã lưu**. Tag trùng được nhận diện không phân biệt hoa/thường; giữ cách viết đã lưu đầu tiên. Gỡ tag khỏi form hoặc xoá dịch vụ/server không xoá tag khỏi danh sách dùng chung. Bấm Thêm lưu tag ngay cả khi bạn chưa lưu hoặc huỷ form; việc gắn tag vào dịch vụ/server chỉ có hiệu lực sau khi lưu record.
+
+Migration `0003_saved_tags` tạo danh sách và nhập tag đã có trên service/server. GET `/api/tags` giữ response catalog `{value, count}`; `count` là số dịch vụ trực tiếp mang tag (không đếm server), có thể bằng 0. POST `/api/tags` nhận `{ "tags": ["gpu", "asr"] }` và trả danh sách tag với cách viết đã lưu. Tag mới khi tạo/sửa service/server qua API cũng được nhớ lại trong cùng transaction.
+
+Khi cập nhật server development, dừng frontend/backend trước khi pull, backup database rồi chạy `docker compose run --rm migrate`. Chỉ chạy `docker compose up -d` sau khi migration thành công; không cần rebuild vì tính năng này không đổi dependency. Các bước migration ở dưới cũng áp dụng cho migration tag mới.
+
 Quan hệ phụ thuộc có hướng: dịch vụ A chọn B và C ở mục **Phụ thuộc vào** của form thêm/sửa. B và C phải là các dịch vụ đã có trong registry và có thể nằm trên server khác. Trang chi tiết A hiển thị B/C; trang B/C hiển thị A ở mục **Được phụ thuộc bởi**. Các liên kết có tên, server/IP và status nhập thủ công của dịch vụ đích. Quan hệ này dùng để tra cứu, không thay đổi thứ tự khởi động Compose hoặc tự cập nhật status.
 
 POST/PUT `/api/services` nhận `dependency_ids: ["<uuid-B>", "<uuid-C>"]` (tối đa 100). PUT thay thế toàn bộ danh sách; `[]` hoặc bỏ field sẽ gỡ các phụ thuộc hiện có. Response chi tiết trả `dependencies` và `dependents`. API chặn ID không tồn tại, tự phụ thuộc và vòng phụ thuộc (A → B → A, kể cả gián tiếp). Khi còn dịch vụ phụ thuộc vào B, xoá B trả 409; hãy gỡ quan hệ trên các dịch vụ đó trước. Xoá A tự xoá các quan hệ do A khai báo.

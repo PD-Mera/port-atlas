@@ -8,6 +8,7 @@ from app.core.database import get_session
 from app.models import Server, Service
 from app.schemas.common import Page
 from app.schemas.registry import ServerDetailRead, ServerInput, ServerListRead, ServerRead, ServiceSummary
+from app.services.tags import remember_tags
 
 router = APIRouter(prefix="/servers", tags=["servers"])
 
@@ -84,6 +85,7 @@ def get_server(server_id: UUID, session: Session = Depends(get_session)) -> Serv
 def create_server(payload: ServerInput, session: Session = Depends(get_session)) -> ServerRead:
     server = Server(**payload.model_dump())
     session.add(server)
+    remember_tags(session, payload.tags)
     session.commit()
     session.refresh(server)
     return ServerRead.model_validate(server)
@@ -96,6 +98,7 @@ def update_server(server_id: UUID, payload: ServerInput, session: Session = Depe
         raise HTTPException(status_code=404, detail="Server not found")
     for field, value in payload.model_dump().items():
         setattr(server, field, value)
+    remember_tags(session, payload.tags)
     session.commit()
     session.refresh(server)
     return ServerRead.model_validate(server)

@@ -111,6 +111,14 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 - [x] Trang chi tiết hiển thị “Phụ thuộc vào” và “Được phụ thuộc bởi”, liên kết tới từng dịch vụ.
 - [x] Hướng dẫn migration trên server; chỉ rà soát tĩnh, chưa chạy migration/build/test.
 
+## Bổ sung theo yêu cầu: lưu và dùng lại tag
+
+- [x] Migration `0003_saved_tags`: lưu danh sách tag độc lập, chống trùng không phân biệt hoa/thường; đưa tag hiện có của service/server vào danh sách.
+- [x] GET `/api/tags` hỗ trợ tag chưa được sử dụng, tìm kiếm và phân trang; POST `/api/tags` lưu tag dùng chung.
+- [x] Lưu tag trong cùng transaction khi tạo/sửa service/server; gỡ tag hoặc xoá record không xoá tag đã lưu.
+- [x] Form service/server có tìm kiếm, phân trang và bấm chọn tag; nhập tag mới rồi bấm Thêm sẽ lưu ngay và chọn cho form.
+- [x] Tài liệu hoá migration và phân biệt lưu tag dùng chung với lưu record; chưa chạy build/test/migration.
+
 ## Phase 2 đã lập kế hoạch
 
 Người dùng đã yêu cầu lập kế hoạch monitoring tự động, kể cả service không có `/health`. Kế hoạch và TODO chi tiết nằm trong [MONITORING.md](MONITORING.md): HTTP/HTTPS và TCP trước, protocol adapters/heartbeat sau, cảnh báo là phần tuỳ chọn. Hiện mới lập kế hoạch, chưa triển khai hoặc gọi probe thật.

@@ -6,6 +6,7 @@ from app.core.database import get_session_factory
 from app.models import Server, Service
 from app.schemas.registry import ServerInput, ServiceInput
 from app.services.registry import service_from_input
+from app.services.tags import remember_tags
 
 
 def main() -> None:
@@ -45,6 +46,7 @@ def main() -> None:
                 server = Server(**server_data.model_dump())
                 session.add(server)
                 session.flush()
+            remember_tags(session, server.tags)
             for values in services:
                 existing = session.scalar(select(Service.id).where(
                     Service.server_id == server.id, func.lower(Service.name) == values["name"].lower()
@@ -53,6 +55,7 @@ def main() -> None:
                     continue  # Never overwrite user edits to existing records.
                 data = ServiceInput(server_id=server.id, environment="demo", status="unknown", **values)
                 session.add(service_from_input(data))
+                remember_tags(session, data.tags)
                 session.flush()
                 created += 1
     print(f"Inserted {created} demo services; existing records were preserved")

@@ -9,6 +9,7 @@ from app.models import Server, Service, ServiceAlias, ServiceCommand, ServiceDep
 from app.schemas.common import AccessRead, Page
 from app.schemas.registry import ServiceInput, ServiceRead, ServiceReference, ServiceSummary, Status
 from app.services.registry import service_from_input
+from app.services.tags import remember_tags
 
 router = APIRouter(prefix="/services", tags=["services"])
 
@@ -143,6 +144,7 @@ def create_service(payload: ServiceInput, session: Session = Depends(get_session
         raise HTTPException(status_code=422, detail="server_id does not reference an existing server")
     service = service_from_input(payload)
     session.add(service)
+    remember_tags(session, payload.tags)
     session.flush()
     session.add_all(ServiceDependency(service_id=service.id, dependency_id=target) for target in payload.dependency_ids)
     session.commit()
@@ -179,6 +181,7 @@ def update_service(service_id: UUID, payload: ServiceInput, session: Session = D
     service.endpoints.extend(ServiceEndpoint(**item.model_dump()) for item in payload.endpoints)
     session.execute(delete(ServiceDependency).where(ServiceDependency.service_id == service_id))
     session.add_all(ServiceDependency(service_id=service_id, dependency_id=target) for target in payload.dependency_ids)
+    remember_tags(session, payload.tags)
     session.commit()
     service = session.scalar(_service_query(service_id))
     if service is None:

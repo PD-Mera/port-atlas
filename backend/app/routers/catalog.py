@@ -3,8 +3,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_session
-from app.models import Service, ServiceTag
+from app.models import SavedTag, Service, ServiceTag
 from app.schemas.common import CatalogItem, Page
+from app.schemas.registry import SavedTagsInput
+from app.services.tags import remember_tags
 
 router = APIRouter(tags=["catalog"])
 
@@ -46,16 +48,28 @@ def list_tags(
 ) -> Page[CatalogItem]:
     filters = []
     if q and q.strip():
-        filters.append(func.lower(ServiceTag.tag).contains(q.strip().lower(), autoescape=True))
+        filters.append(func.lower(SavedTag.value).contains(q.strip().lower(), autoescape=True))
+    usage_count = select(func.count(ServiceTag.service_id)).where(
+        func.lower(ServiceTag.tag) == func.lower(SavedTag.value)
+    ).correlate(SavedTag).scalar_subquery()
     grouped = (
-        select(ServiceTag.tag.label("value"), func.count(ServiceTag.service_id).label("count"))
+        select(SavedTag.value.label("value"), usage_count.label("count"))
         .where(*filters)
-        .group_by(ServiceTag.tag)
     )
     total = session.scalar(select(func.count()).select_from(grouped.subquery())) or 0
     rows = session.execute(
-        grouped.order_by(func.lower(ServiceTag.tag), ServiceTag.tag)
+        grouped.order_by(func.lower(SavedTag.value), SavedTag.value)
         .offset((page - 1) * page_size)
         .limit(page_size)
     ).all()
     return _catalog_page([CatalogItem(value=value, count=count) for value, count in rows], total, page, page_size)
+
+
+@router.post("/tags", response_model=list[str])
+def save_tags(payload: SavedTagsInput, session: Session = Depends(get_session)) -> list[str]:
+    remember_tags(session, payload.tags)
+    session.commit()
+    # Return the stored spelling when a case-insensitive duplicate was supplied.
+    return list(session.scalars(select(SavedTag.value).where(
+        func.lower(SavedTag.value).in_([value.lower() for value in payload.tags])
+    ).order_by(func.lower(SavedTag.value), SavedTag.value)))

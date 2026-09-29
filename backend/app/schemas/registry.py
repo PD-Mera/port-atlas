@@ -225,6 +225,7 @@ class ServiceReference(Schema):
     server_name: str
     server_ip: str
     status: str
+    ports: list[PortRead] = Field(default_factory=list)
 
 
 class ServiceRead(ServiceFields, Record):

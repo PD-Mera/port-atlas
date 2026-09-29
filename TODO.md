@@ -109,6 +109,8 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 - [x] Validate ID tồn tại, chống vòng phụ thuộc gián tiếp và tuần tự hoá các thao tác ghi graph trong API để tránh race.
 - [x] Form chọn nhiều dịch vụ, tìm theo tên, phân trang và gỡ lựa chọn; hỗ trợ phụ thuộc khác server.
 - [x] Trang chi tiết hiển thị “Phụ thuộc vào” và “Được phụ thuộc bởi”, liên kết tới từng dịch vụ.
+- [x] Form sửa hiển thị số lượng và danh sách “Được phụ thuộc bởi” kèm server/IP/status, liên kết tới các dịch vụ đang tham chiếu và trạng thái khi danh sách trống.
+- [x] Các dịch vụ trong danh sách phụ thuộc trả và hiển thị toàn bộ port kèm protocol; dịch vụ chưa khai báo port có nhãn rõ ràng.
 - [x] Hướng dẫn migration trên server; chỉ rà soát tĩnh, chưa chạy migration/build/test.
 
 ## Bổ sung theo yêu cầu: lưu và dùng lại tag

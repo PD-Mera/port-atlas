@@ -5,19 +5,8 @@ import { useMemo, useState } from "react";
 
 import { CopyButton } from "./copy-button";
 import { StatusBadge } from "./ui";
-import type { Command, Endpoint, Service, ServiceReference } from "@/lib/types";
-
-function DependencyList({ title, items }: { title: string; items: ServiceReference[] }) {
-  return <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
-    <h2 className="mb-3 text-lg font-semibold">{title}</h2>
-    {items.length ? <ul className="space-y-2">{items.map((item) => <li key={item.id}>
-      <Link href={`/services/${item.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3 hover:bg-blue-50">
-        <span><span className="font-medium text-blue-700">{item.name}</span><span className="ml-2 text-sm text-slate-500">{item.server_name} · {item.server_ip}</span></span>
-        <StatusBadge status={item.status} />
-      </Link>
-    </li>)}</ul> : <p className="text-sm text-slate-500">Chưa có quan hệ phụ thuộc.</p>}
-  </div>;
-}
+import type { Command, Endpoint, Service } from "@/lib/types";
+import { DependencyList } from "./dependency-list";
 
 function shellQuote(value: string): string {
   return `'${value.replaceAll("'", "'\\''")}'`;

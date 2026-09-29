@@ -58,15 +58,22 @@ def _service_read(session: Session, service: Service) -> ServiceRead:
     def references(reverse: bool = False) -> list[ServiceReference]:
         target = ServiceDependency.service_id if reverse else ServiceDependency.dependency_id
         owner = ServiceDependency.dependency_id if reverse else ServiceDependency.service_id
-        rows = session.execute(
-            select(Service.id, Service.name, Server.name.label("server_name"),
-                   Server.ip.label("server_ip"), Service.status)
+        rows = session.scalars(
+            select(Service)
             .join(Server, Service.server_id == Server.id)
             .join(ServiceDependency, target == Service.id)
-            .where(owner == service.id).order_by(func.lower(Service.name), Service.id)
+            .where(owner == service.id)
+            .options(selectinload(Service.server), selectinload(Service.ports))
+            .order_by(func.lower(Service.name), Service.id)
         ).all()
-        return [ServiceReference(id=row.id, name=row.name, server_name=row.server_name,
-                                 server_ip=str(row.server_ip), status=row.status) for row in rows]
+        return [ServiceReference(
+            id=item.id,
+            name=item.name,
+            server_name=item.server.name,
+            server_ip=str(item.server.ip),
+            status=item.status,
+            ports=item.ports,
+        ) for item in rows]
 
     result.dependencies = references()
     result.dependents = references(reverse=True)

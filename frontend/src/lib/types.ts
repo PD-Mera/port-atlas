@@ -61,7 +61,9 @@ export type ServiceSummary = {
   ports: Port[];
 };
 
-export type ServiceReference = Pick<ServiceSummary, "id" | "name" | "server_name" | "server_ip" | "status">;
+export type ServiceReference = Pick<ServiceSummary, "id" | "name" | "server_name" | "server_ip" | "status"> & {
+  ports: Port[];
+};
 
 export type Service = ServiceSummary & {
   triton_model_names: string[];

@@ -9,6 +9,7 @@ import type { Command, Endpoint, Port, ServerListItem, Service, ServicePayload }
 
 import { FormField } from "./form-field";
 import { DependencyPicker } from "./dependency-picker";
+import { DependencyList } from "./dependency-list";
 import { Repeater } from "./repeater";
 import { TokenEditor } from "./token-editor";
 import { SavedTagEditor } from "./saved-tag-editor";
@@ -107,6 +108,12 @@ export function ServiceForm({ service, title }: { service?: Service; title: stri
   return <form onSubmit={save} className="space-y-8">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-wider text-blue-600">Registry</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{title}</h1><p className="mt-2 text-sm text-slate-500">Các trường có thể để trống nếu chưa biết; command chỉ được lưu để sao chép.</p></div><div className="flex gap-2"><button type="button" onClick={() => router.back()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Huỷ</button><button type="submit" disabled={saving || loadingServers || savingType} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{saving ? "Đang lưu…" : "Lưu service"}</button></div></div>
     {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+    {service && <DependencyList
+      title={`Được phụ thuộc bởi (${service.dependents.length})`}
+      items={service.dependents}
+      description={service.dependents.length ? "Các dịch vụ dưới đây đang phụ thuộc vào dịch vụ này. Để gỡ quan hệ, sửa mục Phụ thuộc vào trên dịch vụ tương ứng." : undefined}
+      emptyMessage="Chưa có dịch vụ khác phụ thuộc vào dịch vụ này."
+    />}
     <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7"><h2 className="mb-5 text-lg font-semibold">Thông tin chính</h2><div className="grid gap-5 md:grid-cols-2">
       <FormField id="service-name" label="Tên service" error={fieldErrors.name}><input id="service-name" required value={form.name} onChange={(event) => set("name", event.target.value)} className={inputClass} /></FormField>
       <FormField id="service-server" label="Server" error={fieldErrors.server_id}><select id="service-server" required value={form.server_id} onChange={(event) => set("server_id", event.target.value)} className={inputClass}><option value="">{loadingServers ? "Đang tải server…" : "Chọn server"}</option>{servers.map((server) => <option key={server.id} value={server.id}>{server.name} · {server.ip}</option>)}</select>{selectedServer && <p className="mt-1 text-xs text-slate-500">{selectedServer.service_count} service trên server này</p>}</FormField>

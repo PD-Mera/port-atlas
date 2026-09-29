@@ -45,8 +45,9 @@ export function DependencyPicker({ serviceId, ids, initial = [], onChange }: {
     <ul className="mt-4 space-y-2">
       {ids.map((id) => {
         const item = known[id] ?? initial.find((candidate) => candidate.id === id);
+        const ports = item?.ports ?? [];
         return <li key={id} className="flex items-center justify-between gap-3 rounded-lg bg-blue-50 px-3 py-2 text-sm">
-          <span>{item ? `${item.name} · ${item.server_name} · ${item.server_ip}` : id}</span>
+          <span className="min-w-0">{item ? <><span>{item.name} · {item.server_name} · {item.server_ip}</span><span className="block break-words text-xs text-slate-500">Port: {ports.length ? ports.map((port) => `${port.name}: ${port.port}/${port.protocol}`).join(", ") : "Chưa khai báo port"}</span></> : id}</span>
           <button type="button" onClick={() => onChange(ids.filter((value) => value !== id))} className="shrink-0 px-2 py-1 text-red-700" aria-label={`Gỡ phụ thuộc ${item?.name ?? id}`}>Gỡ</button>
         </li>;
       })}
@@ -58,7 +59,7 @@ export function DependencyPicker({ serviceId, ids, initial = [], onChange }: {
       <div className="mt-3 max-h-72 space-y-1 overflow-y-auto">
         {items.map((item) => <label key={item.id} className="flex cursor-pointer items-center gap-3 rounded-lg p-3 hover:bg-slate-50">
           <input type="checkbox" checked={ids.includes(item.id)} disabled={!ids.includes(item.id) && ids.length >= 100} onChange={(event) => onChange(event.target.checked ? [...ids, item.id] : ids.filter((id) => id !== item.id))} />
-          <span className="text-sm"><span className="font-medium">{item.name}</span><span className="ml-2 text-slate-500">{item.server_name} · {item.server_ip}</span></span>
+          <span className="min-w-0 text-sm"><span className="font-medium">{item.name}</span><span className="ml-2 text-slate-500">{item.server_name} · {item.server_ip}</span><span className="mt-1 block break-words text-xs text-slate-500">Port: {item.ports.length ? item.ports.map((port) => `${port.name}: ${port.port}/${port.protocol}`).join(", ") : "Chưa khai báo port"}</span></span>
         </label>)}
         {!items.length && <p className="text-sm text-slate-500">Không tìm thấy dịch vụ có thể chọn.</p>}
       </div>

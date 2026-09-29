@@ -5,8 +5,7 @@ BEGIN
     PERFORM 1 FROM services WHERE id = target_id FOR UPDATE;
     IF NOT FOUND THEN RETURN; END IF;
     UPDATE services AS s SET search_text = lower(regexp_replace(concat_ws(' ',
-        s.name, s.description, s.project, s.environment, s.service_type,
-        array_to_string(s.triton_model_names, ' '), s.status,
+        s.name, s.description, s.project, s.environment, s.service_type, s.status,
         s.container_name, s.docker_image, s.compose_path, s.working_directory,
         s.healthcheck_url, s.swagger_url, s.management_url, s.owner, s.notes,
         host(h.ip), h.name, h.hostname, h.ssh_port::text, h.ssh_user,

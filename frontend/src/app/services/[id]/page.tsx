@@ -28,7 +28,7 @@ export default function ServiceDetailPage() {
     }).catch((caught) => { if (!(caught instanceof DOMException && caught.name === "AbortError")) setError(caught instanceof Error ? caught.message : "Không tải được service"); });
     return () => controller.abort();
   }, [params.id]);
-  if (error) return <div className="space-y-4"><Link href="/" className="text-sm text-blue-700 hover:underline">← Về tìm kiếm</Link><ErrorState message={error} /></div>;
+  if (error) return <div className="space-y-4"><Link href="/" className="text-sm text-accent hover:underline">← Về tìm kiếm</Link><ErrorState message={error} /></div>;
   if (!service) return <LoadingState label="Đang tải thông tin service…" />;
   return <ServiceDetail service={service} onDelete={async () => { await deleteService(service.id); router.push("/"); }} />;
 }

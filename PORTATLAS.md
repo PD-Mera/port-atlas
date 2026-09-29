@@ -28,6 +28,7 @@ A single search bar should search across:
 - Environment
 - Tags
 - Service type
+- Triton model names when the service type is `tritonserver`
 - Docker container name
 - Docker image
 - Compose path

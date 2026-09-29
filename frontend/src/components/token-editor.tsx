@@ -31,8 +31,8 @@ export function TokenEditor({ label, values, onChange, placeholder, onAdd }: {
   };
   return <div className="space-y-2">
     <label htmlFor={inputId} className="block text-sm font-medium">{label}</label>
-    <div className="flex gap-2"><input id={inputId} disabled={saving} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void add(); } }} className={inputClass} placeholder={placeholder} /><button type="button" disabled={saving} onClick={() => void add()} className="rounded-lg border border-slate-300 px-3 text-sm font-medium hover:bg-slate-50 disabled:opacity-50">{saving ? "Đang lưu…" : "Thêm"}</button></div>
-    {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-    <div className="flex flex-wrap gap-2">{values.map((value) => <button key={value} type="button" disabled={saving} title="Xoá" onClick={() => onChange(values.filter((item) => item !== value))} className="rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 hover:bg-red-50 hover:text-red-700">{value} ×</button>)}</div>
+    <div className="flex gap-2"><input id={inputId} disabled={saving} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void add(); } }} className={inputClass} placeholder={placeholder} /><button type="button" disabled={saving} onClick={() => void add()} className="rounded-lg border border-border px-3 text-sm font-medium hover:bg-surface-raised disabled:opacity-50">{saving ? "Đang lưu…" : "Thêm"}</button></div>
+    {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+    <div className="flex flex-wrap gap-2">{values.map((value) => <button key={value} type="button" disabled={saving} title="Xoá" onClick={() => onChange(values.filter((item) => item !== value))} className="rounded-full bg-accent-soft px-3 py-1 text-sm text-accent hover:bg-danger-soft hover:text-danger">{value} ×</button>)}</div>
   </div>;
 }

@@ -43,7 +43,7 @@ GET  /api/projects, /api/tags             Catalog values and counts
 GET  /api/search?q=...                    AND search, filters and ranking
 ```
 
-Service `PUT` nhận toàn bộ aggregate và thay thế ports, aliases, tags, endpoints và commands trong cùng transaction. API search hỗ trợ `tag:gpu`, `server:241`, `project:s2t`, `port:4067`; các token độc lập được AND với nhau. Query rỗng trả `recent` và `frequent`; frontend gọi endpoint `/access` đúng một lần khi trang chi tiết đã mở.
+Service `PUT` nhận toàn bộ aggregate và thay thế ports, aliases, tags, endpoints và commands trong cùng transaction. API search hỗ trợ `tag:gpu`, `server:241`, `project:s2t`, `port:4067`; các token độc lập được AND với nhau. Tên model của service type `tritonserver` cũng được lập chỉ mục, nên gõ `yolor` hoặc tên model khác sẽ tìm được đúng service. Query rỗng trả `recent` và `frequent`; frontend gọi endpoint `/access` đúng một lần khi trang chi tiết đã mở.
 
 Frontend giữ `/api/*` cùng origin và dùng rewrite server-side tới `BACKEND_ORIGIN` (mặc định `http://localhost:8000`, Compose sẽ dùng tên service backend). Command palette có focus trap, debounce 180 ms và huỷ request cũ bằng `AbortController`. Service detail chỉ mở link endpoint HTTP/HTTPS, còn commands chỉ có thao tác sao chép.
 
@@ -59,7 +59,7 @@ Màn **Service types** ở `/service-types` dùng để quản trị catalog: t�
 
 Các giá trị catalog trong form service dùng combobox có thể gõ: **Project**, **Environment** và **Service type**. Khi gõ giá trị chưa có trong danh sách, dropdown hiện **Tạo mới …**. Project và Environment được ghi vào service khi bấm Lưu; Service type được ghi nhớ ngay khi chọn tạo mới rồi tự điền vào form. Service type không còn nút tạo riêng bên dưới ô chọn. Server vẫn chỉ chọn từ registry; status, protocol, endpoint type và command type vẫn là enum cố định để giữ validation.
 
-Migration mới nhất là `0004_service_types_triton`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
+Migration mới nhất là `0005_search_triton_models`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
 
 Tag được lưu trong database dùng chung. Trong form dịch vụ/server, nhập tag (có thể phân cách bằng dấu phẩy) và bấm **Thêm** để lưu vào danh sách và chọn cho form. Lần sau có thể tìm và bấm tag ở mục **Tag đã lưu**. Tag trùng được nhận diện không phân biệt hoa/thường; giữ cách viết đã lưu đầu tiên. Gỡ tag khỏi form hoặc xoá dịch vụ/server không xoá tag khỏi danh sách dùng chung. Bấm Thêm lưu tag ngay cả khi bạn chưa lưu hoặc huỷ form; việc gắn tag vào dịch vụ/server chỉ có hiệu lực sau khi lưu record.
 
@@ -94,9 +94,15 @@ Không thay đổi dependency Python/npm cho tính năng này nên không cần 
 - Phân trang dự kiến `page=1`, `page_size=20`, tối đa 100. Input service là toàn bộ aggregate; các bản ghi con sẽ cập nhật trong cùng transaction khi viết CRUD.
 - Lỗi API có dạng `{ "error": { "code": "...", "message": "...", "details": [] } }`; validation trả field path và message, không phản hồi raw input.
 
+## Giao diện
+
+Giao diện mặc định dùng theme tối: sidebar trên desktop, điều hướng ngang trên mobile, tìm nhanh bằng Ctrl K và các card service có port/protocol dễ đọc. Màu dùng semantic token trong `frontend/src/app/globals.css`; form, combobox, trạng thái và các trang catalog dùng chung hệ màu. Có focus bàn phím, native dark controls và hỗ trợ reduced motion. Dùng font hệ thống và SVG trong repo, không bổ sung dependency.
+
+Tham khảo [Linear UI refresh](https://linear.app/now/behind-the-latest-design-refresh) cho thứ bậc và sidebar, [shadcn/ui theming](https://ui.shadcn.com/docs/theming) cho semantic tokens, và [Vercel Web Interface Guidelines](https://vercel.com/design/guidelines) cho focus, tương phản và dark controls. Đây là các nguyên tắc áp dụng vào component hiện có. Chưa chạy build/test hoặc xác minh giao diện bằng preview runtime.
+
 ## Search document
 
-Migration `0001_registry` bật `pg_trgm`, tạo `search_text` và generated `search_vector` với cấu hình `simple`, cùng hai GIN indexes. SQL triggers tái tạo document khi thay đổi service, server hoặc ports/aliases/tags/endpoints/commands, trong transaction của lần ghi đó. Cập nhật search index và lượt truy cập không làm thay đổi thời gian chỉnh sửa registry.
+Migration `0001_registry` bật `pg_trgm`, tạo `search_text` và generated `search_vector` với cấu hình `simple`, cùng hai GIN indexes. SQL triggers tái tạo document khi thay đổi service, server hoặc ports/aliases/tags/endpoints/commands; migration `0005_search_triton_models` bổ sung Triton model names và trigger khi danh sách model thay đổi. Vì vậy có thể tìm trực tiếp bằng tên model, kể cả dữ liệu đã tồn tại trước migration. Cập nhật search index và lượt truy cập không làm thay đổi thời gian chỉnh sửa registry.
 
 Triggers là một phần có phiên bản của migration, không được tạo bằng `Base.metadata.create_all()`. Không dùng create_all thay cho Alembic. Database user chạy migration phải có quyền tạo extension `pg_trgm` hoặc extension phải được quản trị viên cài trước.
 

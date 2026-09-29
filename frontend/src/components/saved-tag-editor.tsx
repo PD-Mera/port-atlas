@@ -53,14 +53,14 @@ export function SavedTagEditor({ label, values, onChange, placeholder }: {
       for (const value of next) if (!seen.has(value.toLowerCase())) { seen.add(value.toLowerCase()); merged.push(value); }
       onChange(merged);
     }} placeholder={placeholder} onAdd={remember} />
-    <p className="text-xs text-slate-500">Tag mới được lưu vào danh sách dùng chung khi bấm Thêm. Bấm tag đã lưu để sử dụng lại.</p>
+    <p className="text-xs text-muted">Tag mới được lưu vào danh sách dùng chung khi bấm Thêm. Bấm tag đã lưu để sử dụng lại.</p>
     <label htmlFor={searchId} className="block text-sm font-medium">Tag đã lưu</label>
     <input id={searchId} maxLength={100} value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} className={inputClass} placeholder="Tìm tag đã lưu…" />
-    {loading ? <p role="status" className="text-sm text-slate-500">Đang tải tag…</p> : error ? <p role="alert" className="text-sm text-red-700">{error} <button type="button" onClick={() => setRevision((value) => value + 1)} className="underline">Thử lại</button></p> : <>
-      <div className="flex flex-wrap gap-2">{items.map((item) => <button key={item.value} type="button" aria-pressed={selected.has(item.value.toLowerCase())} disabled={selected.has(item.value.toLowerCase()) || values.length >= 100} onClick={() => onChange([...values, item.value])} className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700 hover:border-blue-300 hover:bg-blue-50 disabled:bg-blue-50 disabled:text-blue-700">
+    {loading ? <p role="status" className="text-sm text-muted">Đang tải tag…</p> : error ? <p role="alert" className="text-sm text-danger">{error} <button type="button" onClick={() => setRevision((value) => value + 1)} className="underline">Thử lại</button></p> : <>
+      <div className="flex flex-wrap gap-2">{items.map((item) => <button key={item.value} type="button" aria-pressed={selected.has(item.value.toLowerCase())} disabled={selected.has(item.value.toLowerCase()) || values.length >= 100} onClick={() => onChange([...values, item.value])} className="rounded-full border border-border px-3 py-1 text-sm text-foreground hover:border-accent/50 hover:bg-accent-soft disabled:bg-accent-soft disabled:text-accent">
         #{item.value}{selected.has(item.value.toLowerCase()) ? " ✓" : " +"}
       </button>)}</div>
-      {!items.length && <p className="text-sm text-slate-500">Chưa có tag phù hợp. Nhập tag mới ở trên để lưu.</p>}
+      {!items.length && <p className="text-sm text-muted">Chưa có tag phù hợp. Nhập tag mới ở trên để lưu.</p>}
       {total > 20 && <div className="flex items-center gap-3 text-sm">
         <button type="button" disabled={page === 1} onClick={() => setPage((value) => value - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Trước</button>
         <span>{page}/{Math.ceil(total / 20)}</span>

@@ -49,6 +49,7 @@ Nguồn yêu cầu: `PORTATLAS.md`. Đã viết nền tảng mục 1–2, API m�
 - [x] Tìm kiếm không phân biệt hoa thường, hỗ trợ substring, hậu tố IP và fuzzy match; dùng cả search text, tsvector và trigram.
 - [x] Xếp hạng theo thứ tự: tên chính xác, alias chính xác, IP/port chính xác, prefix tên, prefix alias, tags, project, description/notes, rồi điểm fuzzy; tie-break ổn định theo tên và ID.
 - [x] Đưa hostname, server name/tags, protocols, endpoints, container/image, compose path, working directory và commands vào search document qua migration trigger.
+- [x] Đưa các Triton model name vào search document; thêm trigger và migration 0005_search_triton_models để dữ liệu cũ và các lần cập nhật mới đều tìm được theo model.
 - [x] Khi query trống, trả hai nhóm recent/frequent có giới hạn; lịch sử này dùng chung toàn registry vì MVP chưa có tài khoản.
 - [x] Debounce ở frontend và huỷ request cũ để kết quả query trước không ghi đè query mới.
 - [x] Chuẩn bị checklist thử thủ công trên server cho `241 s2t`, `236 triton yolor`, `4067`, `rabbitmq`, `tag:gpu`, `server:241`, `project:s2t port:4067` và kết quả rỗng.
@@ -143,6 +144,14 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 - [x] Áp dụng cho Project, Environment và Service type; project/environment được lưu khi lưu service, service type được ghi nhớ ngay khi chọn tạo mới.
 - [x] Loại bỏ ô/nút tạo riêng của Service type; giữ các enum cố định và Server có ràng buộc riêng.
 - [x] Thêm API catalog Environment và cập nhật hướng dẫn; chưa chạy build/test/migration.
+
+## Bổ sung theo yêu cầu: làm đẹp giao diện và theme tối
+
+- [x] Tham khảo thiết kế Linear, hệ token shadcn/ui và hướng dẫn giao diện Vercel.
+- [x] Theme tối thống nhất với nền nhiều cấp, màu accent, badge trạng thái, input, dropdown, form và error/empty/loading states.
+- [x] Sidebar desktop, điều hướng mobile, trạng thái trang đang chọn và thanh tìm nhanh Ctrl K.
+- [x] Làm mới trang tìm kiếm và card service; hiển thị port rõ hơn, typography và khoảng cách đồng nhất.
+- [x] Bổ sung focus bàn phím, native dark controls và reduced motion; chỉ rà soát tĩnh, chưa build/test hoặc xem preview runtime.
 
 ## Phase 2 đã lập kế hoạch
 

@@ -32,6 +32,8 @@
 
 ## Chất lượng code
 
+- Giao diện mặc định dùng theme tối; màu dùng các semantic token trong `frontend/src/app/globals.css` (surface, foreground, muted, border, accent, success, warning, danger). Các màn mới phải đồng bộ theme, có focus bàn phím và tôn trọng reduced motion.
+
 - Theo stack trong kế hoạch: Next.js + Tailwind CSS, FastAPI, PostgreSQL với `pg_trgm`, `tsvector` và GIN indexes.
 - Validate dữ liệu ở backend; xử lý lỗi và trạng thái loading/empty/error ở frontend.
 - Dùng truy vấn có tham số. Không thực thi command lưu trong database và không fetch URL healthcheck từ backend trong MVP.

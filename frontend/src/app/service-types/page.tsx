@@ -76,29 +76,29 @@ export default function ServiceTypesPage() {
 
   return <div className="space-y-8">
     <div>
-      <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">Quản trị</p>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Service types</h1>
-      <p className="mt-2 text-slate-600">Quản lý các loại dịch vụ dùng trong form. Loại đang được service sử dụng không thể xoá.</p>
+      <p className="text-sm font-semibold uppercase tracking-wider text-accent">Quản trị</p>
+      <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Service types</h1>
+      <p className="mt-2 text-muted">Quản lý các loại dịch vụ dùng trong form. Loại đang được service sử dụng không thể xoá.</p>
     </div>
 
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
+    <section className="rounded-2xl border border-border bg-surface p-5 sm:p-7">
       <h2 className="text-lg font-semibold">Thêm service type</h2>
-      <p className="mt-1 text-sm text-slate-500">Tên sẽ được trim và chuẩn hoá về chữ thường.</p>
+      <p className="mt-1 text-sm text-muted">Tên sẽ được trim và chuẩn hoá về chữ thường.</p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <label htmlFor={inputId} className="sr-only">Tên service type mới</label>
         <input id={inputId} maxLength={100} value={draft} disabled={saving} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void add(); } }} className={inputClass} placeholder="fastapi, worker, tritonserver…" />
-        <button type="button" disabled={saving || !draft.trim()} onClick={() => void add()} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{saving ? "Đang lưu…" : "Thêm"}</button>
+        <button type="button" disabled={saving || !draft.trim()} onClick={() => void add()} className="rounded-lg bg-accent-strong px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50">{saving ? "Đang lưu…" : "Thêm"}</button>
       </div>
-      {formError && <p role="alert" className="mt-3 text-sm text-red-700">{formError}</p>}
+      {formError && <p role="alert" className="mt-3 text-sm text-danger">{formError}</p>}
     </section>
 
     <section className="space-y-4">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div><h2 className="text-lg font-semibold">Danh sách service type</h2><p className="text-sm text-slate-500">{total} loại, cột đang dùng là số service đang gắn loại đó.</p></div>
+        <div><h2 className="text-lg font-semibold">Danh sách service type</h2><p className="text-sm text-muted">{total} loại, cột đang dùng là số service đang gắn loại đó.</p></div>
         <input aria-label="Tìm service type" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} className={`${inputClass} sm:max-w-xs`} placeholder="Tìm service type…" />
       </div>
       {error && <ErrorState message={error} />}
-      {loading ? <LoadingState /> : items.length ? <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white"><div className="divide-y divide-slate-100">{items.map((item) => <div key={item.value} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"><div><p className="font-medium text-slate-900">{item.value}</p><p className="mt-1 text-sm text-slate-500">{item.count} service đang sử dụng</p></div><button type="button" disabled={item.count > 0 || deleting === item.value || deleting !== null} onClick={() => void remove(item)} title={item.count > 0 ? "Không thể xoá loại đang được sử dụng" : "Xoá service type"} className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40">{deleting === item.value ? "Đang xoá…" : "Xoá"}</button></div>)}</div></div> : <EmptyState title="Chưa có service type phù hợp" />}
+      {loading ? <LoadingState /> : items.length ? <div className="overflow-hidden rounded-2xl border border-border bg-surface"><div className="divide-y divide-border">{items.map((item) => <div key={item.value} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"><div><p className="font-medium text-foreground">{item.value}</p><p className="mt-1 text-sm text-muted">{item.count} service đang sử dụng</p></div><button type="button" disabled={item.count > 0 || deleting === item.value || deleting !== null} onClick={() => void remove(item)} title={item.count > 0 ? "Không thể xoá loại đang được sử dụng" : "Xoá service type"} className="rounded-lg border border-danger/25 px-3 py-2 text-sm text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-40">{deleting === item.value ? "Đang xoá…" : "Xoá"}</button></div>)}</div></div> : <EmptyState title="Chưa có service type phù hợp" />}
       {!loading && total > pageSize && <div className="flex items-center justify-center gap-3 text-sm"><button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Trước</button><span>Trang {page}/{pageCount}</span><button type="button" disabled={page >= pageCount} onClick={() => setPage((current) => current + 1)} className="rounded border px-3 py-1 disabled:opacity-40">Sau</button></div>}
     </section>
   </div>;

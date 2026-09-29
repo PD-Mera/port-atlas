@@ -31,9 +31,17 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   useEffect(() => {
     if (!open) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     setSelected(0);
     setQuery("");
-    requestAnimationFrame(() => inputRef.current?.focus());
+    const frame = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => {
+      cancelAnimationFrame(frame);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
   }, [open]);
 
   useEffect(() => {
@@ -61,21 +69,21 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/40 px-4 pt-[12vh]" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
-      <section ref={dialogRef} role="dialog" aria-modal="true" aria-label="Tìm service" className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="border-b border-slate-200 p-4">
-          <input ref={inputRef} value={query} onChange={(event) => { setQuery(event.target.value); setSelected(0); }} onKeyDown={onKeyDown} placeholder="Tìm service, IP, port, project hoặc tag…" className="w-full bg-transparent text-lg outline-none" aria-label="Tìm service" />
-          <p className="mt-2 text-xs text-slate-400">↑ ↓ để chọn · Enter để mở · Esc để đóng</p>
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 px-4 pt-[12vh] backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
+      <section ref={dialogRef} role="dialog" aria-modal="true" aria-label="Tìm service" className="w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl">
+        <div className="border-b border-border p-4">
+          <input ref={inputRef} value={query} onChange={(event) => { setQuery(event.target.value); setSelected(0); }} onKeyDown={onKeyDown} placeholder="Tìm service, model, IP, port, project hoặc tag…" className="w-full bg-transparent text-lg text-foreground outline-none" aria-label="Tìm service" />
+          <p className="mt-2 text-xs text-subtle">↑ ↓ để chọn · Enter để mở · Esc để đóng</p>
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-3">
-          {loading && <p className="px-3 py-4 text-sm text-slate-500">Đang tìm…</p>}
-          {error && <p role="alert" className="px-3 py-4 text-sm text-red-600">{error}</p>}
-          {!loading && !error && navigable.length === 0 && <p className="px-3 py-8 text-center text-sm text-slate-500">Chưa có service phù hợp.</p>}
-          {!query.trim() && data?.recent && data.recent.length > 0 && <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Gần đây</p>}
+          {loading && <p className="px-3 py-4 text-sm text-muted">Đang tìm…</p>}
+          {error && <p role="alert" className="px-3 py-4 text-sm text-danger">{error}</p>}
+          {!loading && !error && navigable.length === 0 && <p className="px-3 py-8 text-center text-sm text-muted">Chưa có service phù hợp.</p>}
+          {!query.trim() && data?.recent && data.recent.length > 0 && <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-subtle">Gần đây</p>}
           {navigable.map((service, index) => (
-            <Link key={service.id} href={`/services/${service.id}`} onClick={close} className={`block rounded-lg px-3 py-3 ${index === selected ? "bg-blue-50" : "hover:bg-slate-50"}`}>
-              <div className="flex items-center justify-between gap-3"><span className="font-medium text-slate-900">{service.name}</span><span className="text-xs text-slate-500">{service.server_ip}</span></div>
-              <p className="mt-1 text-xs text-slate-500">{service.server_name}{service.project ? ` · ${service.project}` : ""}{service.ports.length ? ` · ${service.ports.map((port) => port.port).join(", ")}` : ""}</p>
+            <Link key={service.id} href={`/services/${service.id}`} onClick={close} className={`block rounded-lg px-3 py-3 ${index === selected ? "bg-accent-soft" : "hover:bg-surface-raised"}`}>
+              <div className="flex items-center justify-between gap-3"><span className="font-medium text-foreground">{service.name}</span><span className="text-xs text-muted">{service.server_ip}</span></div>
+              <p className="mt-1 text-xs text-muted">{service.server_name}{service.project ? ` · ${service.project}` : ""}{service.ports.length ? ` · ${service.ports.map((port) => port.port).join(", ")}` : ""}</p>
             </Link>
           ))}
         </div>

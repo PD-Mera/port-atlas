@@ -37,7 +37,7 @@ BEGIN
             FROM service_endpoints WHERE service_id = s.id),
         (SELECT string_agg(concat_ws(' ', name, command, command_type), ' ' ORDER BY name, id)
             FROM service_commands WHERE service_id = s.id)
-    ), '\\s+', ' ', 'g')) FROM servers AS h
+    ), '\s+', ' ', 'g')) FROM servers AS h
     WHERE s.id = target_id AND h.id = s.server_id;
 END;
 $$;

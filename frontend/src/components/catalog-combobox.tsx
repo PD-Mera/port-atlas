@@ -103,17 +103,17 @@ export function CatalogCombobox({
         if (event.key === "Enter" && normalizedDraft && !hasExactOption) { event.preventDefault(); void create(); }
       }}
     />
-    {error && <p className="mt-1 text-sm text-red-700">{error}</p>}
-    {open && <div id={listId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
-      {loading && <p className="px-3 py-2 text-sm text-slate-500">Đang tải…</p>}
-      {!loading && options.map((option) => <button key={option.value} type="button" role="option" aria-selected={option.value.toLowerCase() === normalizedDraft.toLowerCase()} onMouseDown={(event) => event.preventDefault()} onClick={() => choose(option.value)} className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-blue-50">
-        <span>{option.value}</span><span className="text-xs text-slate-400">{option.count}</span>
+    {error && <p className="mt-1 text-sm text-danger">{error}</p>}
+    {open && <div id={listId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-border bg-surface p-1 shadow-lg">
+      {loading && <p className="px-3 py-2 text-sm text-muted">Đang tải…</p>}
+      {!loading && options.map((option) => <button key={option.value} type="button" role="option" aria-selected={option.value.toLowerCase() === normalizedDraft.toLowerCase()} onMouseDown={(event) => event.preventDefault()} onClick={() => choose(option.value)} className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-accent-soft">
+        <span>{option.value}</span><span className="text-xs text-subtle">{option.count}</span>
       </button>)}
-      {!loading && normalizedDraft && !hasExactOption && <button type="button" role="option" onMouseDown={(event) => event.preventDefault()} onClick={() => void create()} className="mt-1 flex w-full items-center rounded-md border-t border-slate-100 px-3 py-2 text-left text-sm font-medium text-blue-700 hover:bg-blue-50">
+      {!loading && normalizedDraft && !hasExactOption && <button type="button" role="option" onMouseDown={(event) => event.preventDefault()} onClick={() => void create()} className="mt-1 flex w-full items-center rounded-md border-t border-border px-3 py-2 text-left text-sm font-medium text-accent hover:bg-accent-soft">
         {creating ? "Đang tạo…" : `+ Tạo mới “${normalizedDraft}”`}
       </button>}
-      {!loading && !options.length && !normalizedDraft && <p className="px-3 py-2 text-sm text-slate-500">Chưa có lựa chọn.</p>}
-      {loadError && <p role="alert" className="px-3 py-2 text-sm text-red-700">{loadError}</p>}
+      {!loading && !options.length && !normalizedDraft && <p className="px-3 py-2 text-sm text-muted">Chưa có lựa chọn.</p>}
+      {loadError && <p role="alert" className="px-3 py-2 text-sm text-danger">{loadError}</p>}
     </div>}
   </div>;
 }

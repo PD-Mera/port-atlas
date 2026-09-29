@@ -23,25 +23,25 @@ export function SearchWorkspace() {
   const hasQuery = query.trim().length > 0;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <section className="max-w-3xl">
-        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">PortAtlas</p>
-        <h1 className="text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">Tìm đúng service trong vài giây.</h1>
-        <p className="mt-5 text-lg leading-8 text-slate-600">Tra cứu server, IP, port, endpoint, Docker container và lệnh vận hành từ một ô tìm kiếm.</p>
+        <p className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-muted"><span className="size-1.5 rounded-full bg-accent" />Service registry</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Tìm đúng service. Trong vài giây.</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">Một nơi để tra cứu server, IP, port, Triton model, endpoint và lệnh vận hành.</p>
       </section>
 
-      <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5 sm:p-7">
+      <section className="search-panel rounded-2xl border border-border p-5 sm:p-6">
         <SearchField id="global-search" value={query} onValueChange={setQuery} label="Tìm toàn registry" autoComplete="off" />
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500"><span>Ví dụ:</span>{examples.map((example) => <button key={example} type="button" onClick={() => setQuery(example)} className="rounded-md bg-white px-2 py-1 text-blue-700 shadow-sm hover:bg-blue-100">{example}</button>)}</div>
-        {data?.filters && data.filters.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{data.filters.map((filter, index) => <span key={`${filter.key}-${filter.value}-${index}`} className="rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white">{filter.key}: {filter.value}</span>)}</div>}
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted"><span>Thử tìm:</span>{examples.map((example) => <button key={example} type="button" onClick={() => setQuery(example)} className="rounded-md border border-border bg-surface/80 px-2.5 py-1.5 font-mono text-muted transition hover:border-accent/50 hover:text-accent">{example}</button>)}</div>
+        {data?.filters && data.filters.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{data.filters.map((filter, index) => <span key={`${filter.key}-${filter.value}-${index}`} className="rounded-full bg-accent-strong px-3 py-1 text-xs font-medium text-white">{filter.key}: {filter.value}</span>)}</div>}
       </section>
 
       {loading && <LoadingState label="Đang tìm trong registry…" />}
       {error && <ErrorState message={error} />}
       {!loading && !error && hasQuery && (
         <section>
-          <SectionHeading title={`${data?.total ?? 0} kết quả`} action={<Link href="/services/new" className="text-sm font-medium text-blue-700 hover:underline">Thêm service</Link>} />
-          {data?.items.length ? <div className="grid gap-4 md:grid-cols-2">{data.items.map((service) => <ServiceCard key={service.id} service={service} score={service.score} />)}</div> : <EmptyState title="Không tìm thấy service phù hợp">Thử tên không đầy đủ, IP suffix, port hoặc một tag khác.</EmptyState>}
+          <SectionHeading title={`${data?.total ?? 0} kết quả`} action={<Link href="/services/new" className="text-sm font-medium text-accent hover:underline">Thêm service</Link>} />
+          {data?.items.length ? <div className="grid gap-4 md:grid-cols-2">{data.items.map((service) => <ServiceCard key={service.id} service={service} score={service.score} />)}</div> : <EmptyState title="Không tìm thấy service phù hợp">Thử một phần tên, Triton model, IP, port hoặc tag khác.</EmptyState>}
         </section>
       )}
       {!loading && !error && !hasQuery && (

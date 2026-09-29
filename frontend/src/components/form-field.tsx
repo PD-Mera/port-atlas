@@ -19,8 +19,8 @@ export function FormField({ id, label, hint, error, children }: {
     <div className="space-y-2">
       <label htmlFor={id} className="block text-sm font-medium">{label}</label>
       {field}
-      {hint && <p id={`${id}-hint`} className="text-sm text-slate-500">{hint}</p>}
-      {error && <p id={`${id}-error`} role="alert" className="text-sm text-red-600">{error}</p>}
+      {hint && <p id={`${id}-hint`} className="text-sm text-muted">{hint}</p>}
+      {error && <p id={`${id}-error`} role="alert" className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

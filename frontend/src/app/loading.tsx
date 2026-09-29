@@ -1,3 +1,3 @@
 export default function Loading() {
-  return <p role="status" className="text-slate-500">Đang tải…</p>;
+  return <p role="status" className="text-muted">Đang tải…</p>;
 }

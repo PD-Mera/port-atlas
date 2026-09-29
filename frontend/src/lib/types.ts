@@ -61,7 +61,11 @@ export type ServiceSummary = {
   ports: Port[];
 };
 
+export type ServiceReference = Pick<ServiceSummary, "id" | "name" | "server_name" | "server_ip" | "status">;
+
 export type Service = ServiceSummary & {
+  dependencies: ServiceReference[];
+  dependents: ServiceReference[];
   server: Server;
   server_id: string;
   description: string | null;
@@ -107,6 +111,7 @@ export type ServerPayload = {
 };
 
 export type ServicePayload = {
+  dependency_ids: string[];
   server_id: string;
   name: string;
   description: string | null;

@@ -5,6 +5,7 @@
 - Đọc `PORTATLAS.md` và `TODO.md` trước khi triển khai tính năng.
 - `PORTATLAS.md` là mô tả sản phẩm; `TODO.md` là danh sách triển khai MVP. Cập nhật checkbox theo phần việc thực sự hoàn thành, không đánh dấu phần chưa xác minh là đã chạy thành công.
 - Giữ MVP tập trung vào registry và tìm kiếm. Không tự mở rộng sang monitoring, discovery, server agents hoặc RBAC.
+- Người dùng đã yêu cầu quan hệ phụ thuộc giữa các dịch vụ: có thể triển khai schema/API/form và hiển thị hai chiều; đây chỉ là dữ liệu registry, không điều khiển khởi động hoặc trạng thái container.
 
 ## Quy trình được người dùng yêu cầu
 

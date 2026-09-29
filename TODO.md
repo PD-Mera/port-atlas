@@ -100,7 +100,16 @@ MVP được code xong khi các luồng chính có triển khai đầy đủ cù
 
 ## Ngoài phạm vi MVP
 
-Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/ports, server agents, import Compose, bulk import/export, RBAC, dependencies và deployment history để giai đoạn sau.
+Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/ports, server agents, import Compose, bulk import/export, RBAC và deployment history để giai đoạn sau.
+
+## Bổ sung theo yêu cầu: quan hệ phụ thuộc dịch vụ
+
+- [x] Migration `0002_service_dependencies`: quan hệ có hướng, khoá ghép chống trùng, cấm tự phụ thuộc; chặn xoá dịch vụ đang được tham chiếu.
+- [x] POST/PUT nhận `dependency_ids`; GET/detail trả `dependencies` và `dependents` kèm tên/server/IP/status hiện tại.
+- [x] Validate ID tồn tại, chống vòng phụ thuộc gián tiếp và tuần tự hoá các thao tác ghi graph trong API để tránh race.
+- [x] Form chọn nhiều dịch vụ, tìm theo tên, phân trang và gỡ lựa chọn; hỗ trợ phụ thuộc khác server.
+- [x] Trang chi tiết hiển thị “Phụ thuộc vào” và “Được phụ thuộc bởi”, liên kết tới từng dịch vụ.
+- [x] Hướng dẫn migration trên server; chỉ rà soát tĩnh, chưa chạy migration/build/test.
 
 ## Phase 2 đã lập kế hoạch
 

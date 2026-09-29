@@ -78,7 +78,7 @@ export function deleteServer(id: string): Promise<void> {
 }
 
 export function listServices(options: {
-  page?: number; page_size?: number; server_id?: string; project?: string; tag?: string; status?: string; signal?: AbortSignal;
+  page?: number; page_size?: number; server_id?: string; project?: string; tag?: string; status?: string; q?: string; signal?: AbortSignal;
 } = {}) {
   const { signal, ...query } = options;
   return apiRequest<Page<ServiceSummary>>(`/api/services${params(query)}`, { signal });

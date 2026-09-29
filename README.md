@@ -51,6 +51,23 @@ Frontend dùng Node.js 22; backend dùng Python 3.12 trở lên theo giới hạ
 
 ## Quy ước dữ liệu
 
+Quan hệ phụ thuộc có hướng: dịch vụ A chọn B và C ở mục **Phụ thuộc vào** của form thêm/sửa. B và C phải là các dịch vụ đã có trong registry và có thể nằm trên server khác. Trang chi tiết A hiển thị B/C; trang B/C hiển thị A ở mục **Được phụ thuộc bởi**. Các liên kết có tên, server/IP và status nhập thủ công của dịch vụ đích. Quan hệ này dùng để tra cứu, không thay đổi thứ tự khởi động Compose hoặc tự cập nhật status.
+
+POST/PUT `/api/services` nhận `dependency_ids: ["<uuid-B>", "<uuid-C>"]` (tối đa 100). PUT thay thế toàn bộ danh sách; `[]` hoặc bỏ field sẽ gỡ các phụ thuộc hiện có. Response chi tiết trả `dependencies` và `dependents`. API chặn ID không tồn tại, tự phụ thuộc và vòng phụ thuộc (A → B → A, kể cả gián tiếp). Khi còn dịch vụ phụ thuộc vào B, xoá B trả 409; hãy gỡ quan hệ trên các dịch vụ đó trước. Xoá A tự xoá các quan hệ do A khai báo.
+
+Trước lần chạy code có tính năng này trên database cũ, cần áp dụng migration `0002_service_dependencies`. Vì source đang được mount/reload, dừng ứng dụng trước khi pull để tránh API dùng bảng chưa được tạo:
+
+```bash
+docker compose stop frontend backend
+git pull --ff-only
+# Backup database theo hướng dẫn ở phần Backup và restore bên dưới.
+docker compose run --rm migrate
+# Chỉ thực hiện khi migration thành công.
+docker compose up -d
+```
+
+Không thay đổi dependency Python/npm cho tính năng này nên không cần rebuild image của cấu hình development hiện tại. Chưa chạy migration/build/test trong môi trường viết code.
+
 - UUID cho mọi record ID; bảng service tags dùng khoá ghép service ID + tag.
 - Timestamp lưu bằng PostgreSQL `timestamptz`; môi trường server mặc định UTC. Database quản lý thời gian chỉnh sửa qua trigger.
 - Tên server duy nhất không phân biệt hoa thường. Tên service duy nhất trong cùng server, không phân biệt hoa thường.

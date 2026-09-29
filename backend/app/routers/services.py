@@ -1,13 +1,13 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import get_session
-from app.models import Server, Service, ServiceAlias, ServiceCommand, ServiceEndpoint, ServicePort, ServiceTag
+from app.models import Server, Service, ServiceAlias, ServiceCommand, ServiceDependency, ServiceEndpoint, ServicePort, ServiceTag
 from app.schemas.common import AccessRead, Page
-from app.schemas.registry import ServiceInput, ServiceRead, ServiceSummary, Status
+from app.schemas.registry import ServiceInput, ServiceRead, ServiceReference, ServiceSummary, Status
 from app.services.registry import service_from_input
 
 router = APIRouter(prefix="/services", tags=["services"])
@@ -23,7 +23,52 @@ SERVICE_LOAD_OPTIONS = (
 
 
 def _service_query(service_id: UUID) -> object:
-    return select(Service).where(Service.id == service_id).options(*SERVICE_LOAD_OPTIONS)
+    return select(Service).where(Service.id == service_id).options(*SERVICE_LOAD_OPTIONS).execution_options(populate_existing=True)
+
+
+def _lock_dependencies(session: Session) -> None:
+    # Serialize graph writes so concurrent A -> B and B -> A cannot bypass validation.
+    session.execute(text("SELECT pg_advisory_xact_lock(734812, 2)"))
+
+
+def _validate_dependencies(session: Session, ids: list[UUID], service_id: UUID | None = None) -> None:
+    if service_id in ids:
+        raise HTTPException(status_code=422, detail="Dịch vụ không thể phụ thuộc vào chính nó")
+    if not ids:
+        return
+    existing = set(session.scalars(select(Service.id).where(Service.id.in_(ids))))
+    if existing != set(ids):
+        raise HTTPException(status_code=422, detail="Một hoặc nhiều dịch vụ phụ thuộc không còn tồn tại")
+    if service_id is not None:
+        reachable = select(ServiceDependency.dependency_id.label("id")).where(
+            ServiceDependency.service_id.in_(ids)
+        ).cte("reachable_dependencies", recursive=True)
+        reachable = reachable.union(select(ServiceDependency.dependency_id).join(
+            reachable, ServiceDependency.service_id == reachable.c.id
+        ))
+        if session.scalar(select(reachable.c.id).where(reachable.c.id == service_id).limit(1)):
+            raise HTTPException(status_code=422, detail="Quan hệ này tạo vòng phụ thuộc giữa các dịch vụ")
+
+
+def _service_read(session: Session, service: Service) -> ServiceRead:
+    result = ServiceRead.model_validate(service)
+
+    def references(reverse: bool = False) -> list[ServiceReference]:
+        target = ServiceDependency.service_id if reverse else ServiceDependency.dependency_id
+        owner = ServiceDependency.dependency_id if reverse else ServiceDependency.service_id
+        rows = session.execute(
+            select(Service.id, Service.name, Server.name.label("server_name"),
+                   Server.ip.label("server_ip"), Service.status)
+            .join(Server, Service.server_id == Server.id)
+            .join(ServiceDependency, target == Service.id)
+            .where(owner == service.id).order_by(func.lower(Service.name), Service.id)
+        ).all()
+        return [ServiceReference(id=row.id, name=row.name, server_name=row.server_name,
+                                 server_ip=str(row.server_ip), status=row.status) for row in rows]
+
+    result.dependencies = references()
+    result.dependents = references(reverse=True)
+    return result
 
 
 def service_summary(service: Service) -> ServiceSummary:
@@ -54,9 +99,12 @@ def list_services(
     project: str | None = Query(None, max_length=200),
     tag: str | None = Query(None, max_length=100),
     status_filter: Status | None = Query(None, alias="status"),
+    q: str | None = Query(None, max_length=200),
     session: Session = Depends(get_session),
 ) -> Page[ServiceSummary]:
     filters = []
+    if q and q.strip():
+        filters.append(func.lower(Service.name).contains(q.strip().lower(), autoescape=True))
     if server_id is not None:
         filters.append(Service.server_id == server_id)
     if project:
@@ -84,30 +132,36 @@ def get_service(service_id: UUID, session: Session = Depends(get_session)) -> Se
     service = session.scalar(_service_query(service_id))
     if service is None:
         raise HTTPException(status_code=404, detail="Service not found")
-    return ServiceRead.model_validate(service)
+    return _service_read(session, service)
 
 
 @router.post("", response_model=ServiceRead, status_code=status.HTTP_201_CREATED)
 def create_service(payload: ServiceInput, session: Session = Depends(get_session)) -> ServiceRead:
+    _lock_dependencies(session)
+    _validate_dependencies(session, payload.dependency_ids)
     if session.get(Server, payload.server_id) is None:
         raise HTTPException(status_code=422, detail="server_id does not reference an existing server")
     service = service_from_input(payload)
     session.add(service)
+    session.flush()
+    session.add_all(ServiceDependency(service_id=service.id, dependency_id=target) for target in payload.dependency_ids)
     session.commit()
     service = session.scalar(_service_query(service.id))
     if service is None:  # defensive: the just-committed record must exist
         raise HTTPException(status_code=500, detail="Created service could not be loaded")
-    return ServiceRead.model_validate(service)
+    return _service_read(session, service)
 
 
 @router.put("/{service_id}", response_model=ServiceRead)
 def update_service(service_id: UUID, payload: ServiceInput, session: Session = Depends(get_session)) -> ServiceRead:
+    _lock_dependencies(session)
     service = session.scalar(_service_query(service_id))
     if service is None:
         raise HTTPException(status_code=404, detail="Service not found")
     if session.get(Server, payload.server_id) is None:
         raise HTTPException(status_code=422, detail="server_id does not reference an existing server")
-    values = payload.model_dump(exclude={"aliases", "tags", "ports", "commands", "endpoints"})
+    _validate_dependencies(session, payload.dependency_ids, service_id)
+    values = payload.model_dump(exclude={"aliases", "tags", "ports", "commands", "endpoints", "dependency_ids"})
     for field, value in values.items():
         setattr(service, field, value)
     # Clear first so replacing a value with the same unique alias/tag/port does
@@ -123,18 +177,25 @@ def update_service(service_id: UUID, payload: ServiceInput, session: Session = D
     service.ports.extend(ServicePort(**item.model_dump()) for item in payload.ports)
     service.commands.extend(ServiceCommand(**item.model_dump()) for item in payload.commands)
     service.endpoints.extend(ServiceEndpoint(**item.model_dump()) for item in payload.endpoints)
+    session.execute(delete(ServiceDependency).where(ServiceDependency.service_id == service_id))
+    session.add_all(ServiceDependency(service_id=service_id, dependency_id=target) for target in payload.dependency_ids)
     session.commit()
     service = session.scalar(_service_query(service_id))
     if service is None:
         raise HTTPException(status_code=500, detail="Updated service could not be loaded")
-    return ServiceRead.model_validate(service)
+    return _service_read(session, service)
 
 
 @router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_service(service_id: UUID, session: Session = Depends(get_session)) -> None:
+    _lock_dependencies(session)
     service = session.get(Service, service_id)
     if service is None:
         raise HTTPException(status_code=404, detail="Service not found")
+    if session.scalar(select(ServiceDependency.service_id).where(
+        ServiceDependency.dependency_id == service_id
+    ).limit(1)):
+        raise HTTPException(status_code=409, detail="Dịch vụ khác đang phụ thuộc vào dịch vụ này. Hãy gỡ quan hệ phụ thuộc trước khi xoá.")
     session.delete(service)
     session.commit()
 

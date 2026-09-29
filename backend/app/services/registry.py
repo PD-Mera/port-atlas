@@ -1,7 +1,7 @@
 from app.models import Service, ServiceAlias, ServiceCommand, ServiceEndpoint, ServicePort, ServiceTag
 from app.schemas.registry import ServiceInput
 
-NESTED_FIELDS = {"aliases", "tags", "ports", "commands", "endpoints"}
+NESTED_FIELDS = {"aliases", "tags", "ports", "commands", "endpoints", "dependency_ids"}
 
 
 def service_from_input(data: ServiceInput) -> Service:

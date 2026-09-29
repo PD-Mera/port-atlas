@@ -150,6 +150,13 @@ class ServiceFields(Schema):
 
 
 class ServiceInput(ServiceFields):
+    dependency_ids: list[UUID] = Field(default_factory=list, max_length=100)
+
+    @field_validator("dependency_ids")
+    @classmethod
+    def unique_dependencies(cls, values: list[UUID]) -> list[UUID]:
+        return list(dict.fromkeys(values))
+
     aliases: list[Name] = Field(default_factory=list, max_length=100)
     tags: list[Label] = Field(default_factory=list, max_length=100)
     ports: list[PortInput] = Field(default_factory=list, max_length=100)
@@ -172,7 +179,17 @@ class ServiceInput(ServiceFields):
         return values
 
 
+class ServiceReference(Schema):
+    id: UUID
+    name: str
+    server_name: str
+    server_ip: str
+    status: str
+
+
 class ServiceRead(ServiceFields, Record):
+    dependencies: list[ServiceReference] = Field(default_factory=list)
+    dependents: list[ServiceReference] = Field(default_factory=list)
     server: ServerRead
     aliases: list[str]
     tags: list[str]

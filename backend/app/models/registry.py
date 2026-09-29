@@ -91,6 +91,16 @@ class Service(IdentityMixin, TimestampMixin, Base):
     endpoints: Mapped[list["ServiceEndpoint"]] = relationship(back_populates="service", cascade="all, delete-orphan", passive_deletes=True)
 
 
+class ServiceDependency(Base):
+    __tablename__ = "service_dependencies"
+    __table_args__ = (
+        CheckConstraint("service_id <> dependency_id", name="not_self"),
+        Index("ix_service_dependencies_dependency_id", "dependency_id"),
+    )
+    service_id: Mapped[UUID] = mapped_column(ForeignKey("services.id", ondelete="CASCADE"), primary_key=True)
+    dependency_id: Mapped[UUID] = mapped_column(ForeignKey("services.id", ondelete="RESTRICT"), primary_key=True)
+
+
 class ServicePort(IdentityMixin, Base):
     __tablename__ = "service_ports"
     __table_args__ = (

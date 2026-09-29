@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=77,<83"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "portatlas-backend"
+version = "0.1.0"
+description = "Internal Linux service registry"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+  "fastapi==0.141.1",
+  "uvicorn==0.54.0",
+  "SQLAlchemy==2.1.1",
+  "alembic==1.20.0",
+  "psycopg[binary]==3.3.6",
+  "pydantic==2.13.5",
+  "pydantic-settings==2.15.0",
+]
+
+[project.scripts]
+portatlas-reindex = "app.services.search_index:main"
+portatlas-seed = "app.services.seed:main"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

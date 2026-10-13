@@ -27,6 +27,18 @@ export type Endpoint = {
   endpoint_type: string;
 };
 
+export type RabbitMqConsumer = {
+  id?: string;
+  host: string;
+  port: number;
+  protocol: "amqp" | "amqps";
+  virtual_host: string;
+  queue: string;
+  exchange: string | null;
+  routing_key: string | null;
+  consumer_tag: string | null;
+};
+
 export type Server = {
   id: string;
   created_at: string;
@@ -83,6 +95,7 @@ export type Service = ServiceSummary & {
   notes: string | null;
   commands: Command[];
   endpoints: Endpoint[];
+  rabbitmq_consumers: RabbitMqConsumer[];
   last_accessed_at: string | null;
   access_count: number;
   created_at: string;
@@ -141,6 +154,7 @@ export type ServicePayload = {
   ports: Omit<Port, "id">[];
   commands: Omit<Command, "id">[];
   endpoints: Omit<Endpoint, "id">[];
+  rabbitmq_consumers: Omit<RabbitMqConsumer, "id">[];
 };
 
 export type ServerDetail = Server & { services: ServiceSummary[] };

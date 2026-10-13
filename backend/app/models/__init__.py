@@ -1,8 +1,8 @@
 from app.models.registry import (
-    Base, SavedServiceType, SavedTag, Server, Service, ServiceAlias, ServiceCommand, ServiceDependency, ServiceEndpoint, ServicePort, ServiceTag,
+    Base, SavedServiceType, SavedTag, Server, Service, ServiceAlias, ServiceCommand, ServiceDependency, ServiceEndpoint, ServicePort, ServiceRabbitMqConsumer, ServiceTag,
 )
 
 __all__ = [
     "Base", "Server", "Service", "ServiceAlias", "ServiceCommand", "ServiceEndpoint",
-    "ServicePort", "ServiceTag", "ServiceDependency", "SavedTag", "SavedServiceType",
+    "ServicePort", "ServiceRabbitMqConsumer", "ServiceTag", "ServiceDependency", "SavedTag", "SavedServiceType",
 ]

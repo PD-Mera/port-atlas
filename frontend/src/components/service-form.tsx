@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 
 import { ApiError, createService, getService, listOwners, listProjects, listServers, updateService } from "@/lib/api";
-import type { Command, Endpoint, Port, ServerListItem, Service, ServicePayload } from "@/lib/types";
+import type { Command, Endpoint, Port, RabbitMqConsumer, ServerListItem, Service, ServicePayload } from "@/lib/types";
 
 import { FormField } from "./form-field";
 import { DependencyPicker } from "./dependency-picker";
@@ -20,6 +20,37 @@ import { inputClass, textareaClass } from "./ui";
 const emptyPort = (): Omit<Port, "id"> => ({ name: "HTTP", port: 80, protocol: "http", description: "" });
 const emptyEndpoint = (): Omit<Endpoint, "id"> => ({ name: "", url: "", endpoint_type: "endpoint" });
 const emptyCommand = (): Omit<Command, "id"> => ({ name: "", command: "", command_type: "logs" });
+const emptyRabbitMqConsumer = (): Omit<RabbitMqConsumer, "id"> => ({ host: "", port: 5672, protocol: "amqp", virtual_host: "/", queue: "", exchange: "", routing_key: "", consumer_tag: "" });
+
+type RabbitMqConsumerDraft = Omit<RabbitMqConsumer, "id">;
+
+function RabbitMqConsumerRow({
+  value, index, fieldErrors, onChange, onRemove,
+}: {
+  value: RabbitMqConsumerDraft;
+  index: number;
+  fieldErrors: Record<string, string>;
+  onChange: (value: RabbitMqConsumerDraft) => void;
+  onRemove: () => void;
+}) {
+  const update = <K extends keyof RabbitMqConsumerDraft>(key: K, next: RabbitMqConsumerDraft[K]) => onChange({ ...value, [key]: next });
+  const error = (key: keyof RabbitMqConsumerDraft) => fieldErrors[`rabbitmq_consumers.${index}.${key}`];
+  return <div className="space-y-3 rounded-lg border border-border bg-surface-raised p-3">
+    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_110px_120px_auto]">
+      <div><input aria-label={`RabbitMQ host ${index + 1}`} value={value.host} onChange={(event) => update("host", event.target.value)} className={inputClass} placeholder="rabbitmq" />{error("host") && <p className="mt-1 text-xs text-danger">{error("host")}</p>}</div>
+      <div><input aria-label={`RabbitMQ port ${index + 1}`} type="number" min={1} max={65535} value={value.port} onChange={(event) => update("port", Number(event.target.value))} className={inputClass} placeholder="5672" />{error("port") && <p className="mt-1 text-xs text-danger">{error("port")}</p>}</div>
+      <select aria-label={`RabbitMQ protocol ${index + 1}`} value={value.protocol} onChange={(event) => update("protocol", event.target.value as RabbitMqConsumerDraft["protocol"])} className={inputClass}><option value="amqp">amqp</option><option value="amqps">amqps</option></select>
+      <button type="button" onClick={onRemove} className="rounded-lg px-2 text-sm text-danger hover:bg-danger-soft">Xoá</button>
+    </div>
+    <div className="grid gap-2 sm:grid-cols-2">
+      <div><input aria-label={`RabbitMQ virtual host ${index + 1}`} value={value.virtual_host} onChange={(event) => update("virtual_host", event.target.value)} className={inputClass} placeholder="/" />{error("virtual_host") && <p className="mt-1 text-xs text-danger">{error("virtual_host")}</p>}</div>
+      <div><input aria-label={`RabbitMQ queue ${index + 1}`} value={value.queue} onChange={(event) => update("queue", event.target.value)} className={inputClass} placeholder="queue-name" />{error("queue") && <p className="mt-1 text-xs text-danger">{error("queue")}</p>}</div>
+      <input aria-label={`RabbitMQ exchange ${index + 1}`} value={value.exchange ?? ""} onChange={(event) => update("exchange", event.target.value)} className={inputClass} placeholder="Exchange (tuỳ chọn)" />
+      <input aria-label={`RabbitMQ routing key ${index + 1}`} value={value.routing_key ?? ""} onChange={(event) => update("routing_key", event.target.value)} className={inputClass} placeholder="Routing key (tuỳ chọn)" />
+      <input aria-label={`RabbitMQ consumer tag ${index + 1}`} value={value.consumer_tag ?? ""} onChange={(event) => update("consumer_tag", event.target.value)} className={`${inputClass} sm:col-span-2`} placeholder="Consumer tag (tuỳ chọn)" />
+    </div>
+  </div>;
+}
 
 function nullableText(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? "";
@@ -38,11 +69,12 @@ function payloadFromService(service: Service): ServicePayload {
     management_url: service.management_url, owner: service.owner, notes: service.notes, aliases: [...service.aliases],
     tags: [...service.tags], ports: service.ports.map(({ id, ...port }) => port), commands: service.commands.map(({ id, ...command }) => command),
     endpoints: service.endpoints.map(({ id, ...endpoint }) => endpoint),
+    rabbitmq_consumers: service.rabbitmq_consumers.map(({ id, ...consumer }) => consumer),
   };
 }
 
 function blankPayload(serverId = ""): ServicePayload {
-  return { triton_model_names: [], dependency_ids: [], server_id: serverId, name: "", description: null, project: null, environment: null, service_type: null, status: "unknown", container_name: null, docker_image: null, working_directory: null, compose_path: null, run_command: null, komodo_path: null, healthcheck_url: null, swagger_url: null, management_url: null, owner: null, notes: null, aliases: [], tags: [], ports: [], commands: [], endpoints: [] };
+  return { triton_model_names: [], dependency_ids: [], server_id: serverId, name: "", description: null, project: null, environment: null, service_type: null, status: "unknown", container_name: null, docker_image: null, working_directory: null, compose_path: null, run_command: null, komodo_path: null, healthcheck_url: null, swagger_url: null, management_url: null, owner: null, notes: null, aliases: [], tags: [], ports: [], commands: [], endpoints: [], rabbitmq_consumers: [] };
 }
 
 export function ServiceForm({ service, title }: { service?: Service; title: string }) {
@@ -93,6 +125,18 @@ export function ServiceForm({ service, title }: { service?: Service; title: stri
         notes: nullableText(form.notes),
         commands: form.commands.filter((command) => command.name.trim() || command.command.trim()),
         endpoints: form.endpoints.filter((endpoint) => endpoint.name.trim() || endpoint.url.trim()),
+        rabbitmq_consumers: form.rabbitmq_consumers
+          .filter((consumer) => consumer.host.trim() || consumer.queue.trim() || consumer.exchange?.trim() || consumer.routing_key?.trim() || consumer.consumer_tag?.trim())
+          .map((consumer) => ({
+            ...consumer,
+            host: consumer.host.trim(),
+            port: Number(consumer.port),
+            virtual_host: consumer.virtual_host.trim() || "/",
+            queue: consumer.queue.trim(),
+            exchange: nullableText(consumer.exchange),
+            routing_key: nullableText(consumer.routing_key),
+            consumer_tag: nullableText(consumer.consumer_tag),
+          })),
       };
       const result = service ? await updateService(service.id, payload) : await createService(payload);
       router.push(`/services/${result.id}`);
@@ -105,6 +149,7 @@ export function ServiceForm({ service, title }: { service?: Service; title: stri
   const updatePort = (index: number, value: Partial<Omit<Port, "id">>) => set("ports", form.ports.map((port, current) => current === index ? { ...port, ...value } : port));
   const updateEndpoint = (index: number, value: Partial<Omit<Endpoint, "id">>) => set("endpoints", form.endpoints.map((endpoint, current) => current === index ? { ...endpoint, ...value } : endpoint));
   const updateCommand = (index: number, value: Partial<Omit<Command, "id">>) => set("commands", form.commands.map((command, current) => current === index ? { ...command, ...value } : command));
+  const updateRabbitMqConsumer = (index: number, value: Partial<RabbitMqConsumerDraft>) => set("rabbitmq_consumers", form.rabbitmq_consumers.map((consumer, current) => current === index ? { ...consumer, ...value } : consumer));
 
   return <form onSubmit={save} className="space-y-8">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-wider text-accent">Registry</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">{title}</h1><p className="mt-2 text-sm text-muted">Các trường có thể để trống nếu chưa biết; command chỉ được lưu để sao chép.</p></div><div className="flex gap-2"><button type="button" onClick={() => router.back()} className="rounded-lg border border-border px-4 py-2 text-sm">Huỷ</button><button type="submit" disabled={saving || loadingServers || savingType} className="rounded-lg bg-accent-strong px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50">{saving ? "Đang lưu…" : "Lưu service"}</button></div></div>
@@ -129,6 +174,7 @@ export function ServiceForm({ service, title }: { service?: Service; title: stri
       <div className="md:col-span-2"><FormField id="service-notes" label="Notes"><textarea id="service-notes" value={form.notes ?? ""} onChange={(event) => set("notes", event.target.value)} className={textareaClass} /></FormField></div>
     </div></section>
     <DependencyPicker serviceId={service?.id} ids={form.dependency_ids} initial={service?.dependencies} onChange={(ids) => set("dependency_ids", ids)} />
+    <section className="rounded-2xl border border-border bg-surface p-5 sm:p-7"><Repeater label="RabbitMQ consumer (tuỳ chọn)" addLabel="Thêm queue" onAdd={() => { if (form.rabbitmq_consumers.length < 100) set("rabbitmq_consumers", [...form.rabbitmq_consumers, emptyRabbitMqConsumer()]); }}><p className="text-xs leading-5 text-muted">Chỉ khai báo khi service consume message từ RabbitMQ. Không lưu username/password hoặc kết nối tới broker.</p>{form.rabbitmq_consumers.map((consumer, index) => <RabbitMqConsumerRow key={index} value={consumer} index={index} fieldErrors={fieldErrors} onChange={(value) => updateRabbitMqConsumer(index, value)} onRemove={() => set("rabbitmq_consumers", form.rabbitmq_consumers.filter((_, current) => current !== index))} />)}{!form.rabbitmq_consumers.length && <p className="text-sm text-muted">Chưa khai báo queue RabbitMQ.</p>}{fieldErrors.rabbitmq_consumers && <p role="alert" className="text-sm text-danger">{fieldErrors.rabbitmq_consumers}</p>}</Repeater></section>
     <section className="grid gap-8 lg:grid-cols-2"><div className="space-y-8 rounded-2xl border border-border bg-surface p-5 sm:p-7"><TokenEditor label="Aliases" values={form.aliases} onChange={(values) => set("aliases", values)} placeholder="s2t, speech" /><SavedTagEditor label="Tags" values={form.tags} onChange={(values) => set("tags", values)} placeholder="gpu, asr" /></div><div className="rounded-2xl border border-border bg-surface p-5 sm:p-7"><Repeater label="Ports" onAdd={() => set("ports", [...form.ports, emptyPort()])}>{form.ports.map((port, index) => <div key={`${port.name}-${index}`} className="grid gap-2 rounded-lg border border-border bg-surface-raised p-3 sm:grid-cols-[1fr_100px_120px_auto]"><input aria-label="Tên port" value={port.name} onChange={(event) => updatePort(index, { name: event.target.value })} className={inputClass} placeholder="HTTP" /><input aria-label="Số port" type="number" min={1} max={65535} value={port.port} onChange={(event) => updatePort(index, { port: Number(event.target.value) })} className={inputClass} /><select aria-label="Protocol" value={port.protocol} onChange={(event) => updatePort(index, { protocol: event.target.value })} className={inputClass}><option>tcp</option><option>udp</option><option>http</option><option>https</option><option>grpc</option><option>amqp</option><option>amqps</option><option>redis</option><option>postgresql</option><option>other</option></select><button type="button" onClick={() => set("ports", form.ports.filter((_, current) => current !== index))} className="rounded-lg px-2 text-sm text-danger hover:bg-danger-soft">Xoá</button><input aria-label="Mô tả port" value={port.description ?? ""} onChange={(event) => updatePort(index, { description: event.target.value })} className={`${inputClass} sm:col-span-3`} placeholder="Mô tả" /></div>)}</Repeater></div></section>
     <section className="grid gap-8 lg:grid-cols-2"><div className="rounded-2xl border border-border bg-surface p-5 sm:p-7"><Repeater label="Endpoints" onAdd={() => set("endpoints", [...form.endpoints, emptyEndpoint()])}>{form.endpoints.map((endpoint, index) => <div key={`${endpoint.name}-${index}`} className="grid gap-2 rounded-lg border border-border bg-surface-raised p-3 sm:grid-cols-[1fr_140px_auto]"><input aria-label="Tên endpoint" value={endpoint.name} onChange={(event) => updateEndpoint(index, { name: event.target.value })} className={inputClass} /><select aria-label="Loại endpoint" value={endpoint.endpoint_type} onChange={(event) => updateEndpoint(index, { endpoint_type: event.target.value })} className={inputClass}><option>endpoint</option><option>swagger</option><option>management</option><option>healthcheck</option><option>metrics</option><option>other</option></select><button type="button" onClick={() => set("endpoints", form.endpoints.filter((_, current) => current !== index))} className="rounded-lg px-2 text-sm text-danger hover:bg-danger-soft">Xoá</button><input aria-label="URL endpoint" value={endpoint.url} onChange={(event) => updateEndpoint(index, { url: event.target.value })} className={`${inputClass} sm:col-span-2`} placeholder="https://…" /></div>)}</Repeater><div className="mt-6 grid gap-4 sm:grid-cols-3"><FormField id="healthcheck-url" label="Healthcheck URL" hint="HTTP/HTTPS"><input id="healthcheck-url" value={form.healthcheck_url ?? ""} onChange={(event) => set("healthcheck_url", event.target.value)} className={inputClass} /></FormField><FormField id="swagger-url" label="Swagger URL"><input id="swagger-url" value={form.swagger_url ?? ""} onChange={(event) => set("swagger_url", event.target.value)} className={inputClass} /></FormField><FormField id="management-url" label="Management URL"><input id="management-url" value={form.management_url ?? ""} onChange={(event) => set("management_url", event.target.value)} className={inputClass} /></FormField></div></div><div className="rounded-2xl border border-border bg-surface p-5 sm:p-7"><Repeater label="Commands" addLabel="Thêm command" onAdd={() => set("commands", [...form.commands, emptyCommand()])}>{form.commands.map((command, index) => <div key={`${command.name}-${index}`} className="space-y-2 rounded-lg border border-border bg-surface-raised p-3"><div className="grid gap-2 sm:grid-cols-[1fr_140px_auto]"><input aria-label="Tên command" value={command.name} onChange={(event) => updateCommand(index, { name: event.target.value })} className={inputClass} placeholder="Logs" /><select aria-label="Loại command" value={command.command_type} onChange={(event) => updateCommand(index, { command_type: event.target.value })} className={inputClass}><option>ssh</option><option>start</option><option>stop</option><option>restart</option><option>logs</option><option>custom</option></select><button type="button" onClick={() => set("commands", form.commands.filter((_, current) => current !== index))} className="rounded-lg px-2 text-sm text-danger hover:bg-danger-soft">Xoá</button></div><textarea aria-label="Command" value={command.command} onChange={(event) => updateCommand(index, { command: event.target.value })} className={textareaClass} placeholder="docker logs …" /></div>)}</Repeater></div></section>
   </form>;

@@ -25,7 +25,7 @@ Nguồn yêu cầu: `PORTATLAS.md`. Đã viết nền tảng mục 1–2, API m�
 - [x] Bổ sung `services.status`, `last_accessed_at`, `access_count` vì yêu cầu tính năng có nhưng schema gợi ý chưa liệt kê; status được nhập thủ công trong MVP.
 - [x] Tạo `service_endpoints` để lưu nhiều URL với tên và loại endpoint; giữ các trường healthcheck/swagger/management theo kế hoạch.
 - [x] Lưu server name, hostname, IP, SSH user/port, description, location, tags và timestamps.
-- [x] Lưu đầy đủ thông tin service: server, aliases, description, project, environment, type, status, ports/protocols, URLs, Docker/Compose, owner, tags, notes và commands.
+- [x] Lưu đầy đủ thông tin service: server, aliases, description, project, environment, type, status, ports/protocols, URLs, legacy Docker/Compose metadata, Run Command, Komodo Path, owner, tags, notes và commands.
 - [x] Thêm foreign keys và indexes; xoá service thì cascade dữ liệu con; ràng buộc database từ chối xoá server còn service, error handler chuẩn bị phản hồi conflict.
 - [x] Validate cổng trong khoảng 1–65535; validate địa chỉ IP, URL HTTP/HTTPS, enum và độ dài field; bỏ alias/tag trống hoặc trùng sau normalize.
 - [x] Tạo `search_text`, `search_vector`, GIN index cho vector và trigram. Chọn cấu hình full-text `simple` để phù hợp tên kỹ thuật.
@@ -56,7 +56,7 @@ Nguồn yêu cầu: `PORTATLAS.md`. Đã viết nền tảng mục 1–2, API m�
 
 ## 5. Giao diện MVP
 
-- [x] Global Search: ô tìm kiếm luôn dễ truy cập, card kết quả có tên, IP, tất cả ports, project, container, environment, status và tags.
+- [x] Global Search: ô tìm kiếm luôn dễ truy cập, card kết quả có tên, IP, tất cả ports, project, service type, status và tags.
 - [x] Command palette: `Ctrl + K` mở search, mũi tên chọn kết quả, Enter mở chi tiết, Esc đóng; quản lý focus, focus trap và không gây xung đột khi nhập form.
 - [x] Hiển thị recent/frequent khi query trống và link vào chi tiết service.
 - [x] Service Detail: hiển thị toàn bộ fields, endpoints, ports, server, notes và commands; ghi nhận lượt truy cập một lần cho mỗi lần mở trang.
@@ -160,6 +160,14 @@ Monitoring tự động, healthcheck định kỳ, discovery Docker/systemd/port
 - [x] Thêm `/api/owners` và chuyển Owner thành combobox có thể gõ/chọn/tạo giá trị khi lưu service.
 - [x] Đưa Triton model names ngay dưới Service type khi chọn `tritonserver`; giữ dynamic list và validation hiện có.
 - [x] Cập nhật detail, quick actions và tài liệu; chưa chạy migration/build/test.
+
+## Bổ sung theo yêu cầu: RabbitMQ consumer destinations
+
+- [x] Thêm bảng con `service_rabbitmq_consumers` với host, port, protocol, virtual host, queue, exchange, routing key và consumer tag.
+- [x] Mở rộng ServiceInput/ServiceRead và CRUD transaction để thay thế danh sách consumer bindings cùng service aggregate.
+- [x] Đưa metadata RabbitMQ vào search document và trigger khi thêm/sửa/xoá binding; migration mới là `0007_rabbitmq_consumers`.
+- [x] Thêm repeater trong form service và hiển thị detail/copy; không lưu credential hoặc thực hiện kết nối RabbitMQ.
+- [x] Cập nhật `PORTATLAS.md`, `README.md`, `AGENTS.md`; chưa chạy migration/build/test.
 
 ## Phase 2 đã lập kế hoạch
 

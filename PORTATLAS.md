@@ -29,6 +29,7 @@ A single search bar should search across:
 - Tags
 - Service type
 - Triton model names when the service type is `tritonserver`
+- RabbitMQ consumer host, port, protocol, virtual host, queue, exchange, routing key and consumer tag metadata
 - Run Command
 - Komodo Path
 - Working directory
@@ -71,6 +72,7 @@ Each service can store:
 - Server
 - Project
 - Service type
+- RabbitMQ consumer destinations (host, port, protocol, virtual host, queue, exchange, routing key and consumer tag)
 - Status
 - Ports
 - Protocols
@@ -278,6 +280,21 @@ command
 command_type
 ```
 
+### service_rabbitmq_consumers
+
+```text
+id
+service_id
+host
+port
+protocol
+virtual_host
+queue
+exchange
+routing_key
+consumer_tag
+```
+
 ## UX Principles
 
 PortAtlas should prioritize speed over dashboard complexity.
@@ -296,8 +313,7 @@ TTCP-S2T API
 10.9.3.241:4067
 
 Project: TTCP-S2T
-Container: ttcp-s2t-api
-Environment: Production
+RabbitMQ: rabbitmq:5672 / s2t.jobs
 
 speech  asr  gpu  fastapi
 

@@ -43,7 +43,7 @@ GET  /api/projects, /api/tags, /api/owners Catalog values and counts
 GET  /api/search?q=...                    AND search, filters and ranking
 ```
 
-Service `PUT` nhận toàn bộ aggregate và thay thế ports, aliases, tags, endpoints và commands trong cùng transaction. API search hỗ trợ `tag:gpu`, `server:241`, `project:s2t`, `port:4067`; các token độc lập được AND với nhau. Tên model của service type `tritonserver` cũng được lập chỉ mục, nên gõ `yolor` hoặc tên model khác sẽ tìm được đúng service. Query rỗng trả `recent` và `frequent`; frontend gọi endpoint `/access` đúng một lần khi trang chi tiết đã mở.
+Service `PUT` nhận toàn bộ aggregate và thay thế ports, aliases, tags, endpoints, commands và RabbitMQ consumer bindings trong cùng transaction. API search hỗ trợ `tag:gpu`, `server:241`, `project:s2t`, `port:4067`; các token độc lập được AND với nhau. Tên model của service type `tritonserver` cũng được lập chỉ mục, nên gõ `yolor` hoặc tên model khác sẽ tìm được đúng service. RabbitMQ host, virtual host, queue, exchange, routing key và consumer tag cũng được lập chỉ mục. Query rỗng trả `recent` và `frequent`; frontend gọi endpoint `/access` đúng một lần khi trang chi tiết đã mở.
 
 Frontend giữ `/api/*` cùng origin và dùng rewrite server-side tới `BACKEND_ORIGIN` (mặc định `http://localhost:8000`, Compose sẽ dùng tên service backend). Command palette có focus trap, debounce 180 ms và huỷ request cũ bằng `AbortController`. Service detail chỉ mở link endpoint HTTP/HTTPS, còn commands chỉ có thao tác sao chép.
 
@@ -55,11 +55,13 @@ Frontend dùng Node.js 22; backend dùng Python 3.12 trở lên theo giới hạ
 
 Chọn `tritonserver` sẽ hiện **Triton model names**, bấm **+ Thêm model** để thêm từng dòng hoặc **Xoá** để gỡ. Payload/detail có `triton_model_names: ["yolor", "whisper"]`, tối đa 200 tên, mỗi tên tối đa 200 ký tự. Tên được trim, bỏ dòng rỗng và trùng chính xác; phân biệt chữ hoa/thường. Detail hiển thị danh sách kèm thao tác copy. Khi đổi sang loại khác và lưu, form gửi danh sách rỗng để gỡ model names; API từ chối danh sách không rỗng cho loại khác `tritonserver`. Đây là metadata nhập thủ công, không gọi Triton hoặc load model.
 
+Mục **RabbitMQ consumer** cho phép khai báo nhiều đích consume trên một service: host, port, protocol `amqp`/`amqps`, virtual host, queue, exchange, routing key và consumer tag. Các trường này là metadata để tra cứu/copy; không lưu username/password và không có thao tác kết nối hoặc kiểm tra broker.
+
 Màn **Service types** ở `/service-types` dùng để quản trị catalog: tìm kiếm, thêm loại và xem số service đang sử dụng. Chỉ loại có usage count bằng 0 mới xoá được; API trả 409 nếu loại đang được tham chiếu. Tên loại được chuẩn hoá chữ thường như khi thêm tại form service.
 
 Các giá trị catalog trong form service dùng combobox có thể gõ: **Project**, **Owner** và **Service type**. Khi gõ giá trị chưa có trong danh sách, dropdown hiện **Tạo mới …**. Project và Owner được ghi vào service khi bấm Lưu; Owner lấy các giá trị đã dùng từ `/api/owners`, còn giá trị mới sẽ xuất hiện sau khi service được lưu. Service type được ghi nhớ ngay khi chọn tạo mới rồi tự điền vào form. Environment, Docker container, Docker image và Compose path không còn hiển thị trong form. Run Command và Komodo Path là các trường metadata mới; Working directory vẫn được giữ. Server vẫn chỉ chọn từ registry; status, protocol, endpoint type và command type vẫn là enum cố định để giữ validation.
 
-Migration mới nhất là `0006_service_metadata`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
+Migration mới nhất là `0007_rabbitmq_consumers`; cần áp dụng trước khi ứng dụng nạp source mới. Dừng frontend/backend, pull code, backup database, chạy `docker compose run --rm migrate`, rồi `docker compose up -d` khi migration thành công. Không cần rebuild với cấu hình development hiện tại vì không đổi dependency.
 
 Tag được lưu trong database dùng chung. Trong form dịch vụ/server, nhập tag (có thể phân cách bằng dấu phẩy) và bấm **Thêm** để lưu vào danh sách và chọn cho form. Lần sau có thể tìm và bấm tag ở mục **Tag đã lưu**. Tag trùng được nhận diện không phân biệt hoa/thường; giữ cách viết đã lưu đầu tiên. Gỡ tag khỏi form hoặc xoá dịch vụ/server không xoá tag khỏi danh sách dùng chung. Bấm Thêm lưu tag ngay cả khi bạn chưa lưu hoặc huỷ form; việc gắn tag vào dịch vụ/server chỉ có hiệu lực sau khi lưu record.
 
@@ -102,7 +104,7 @@ Tham khảo [Linear UI refresh](https://linear.app/now/behind-the-latest-design-
 
 ## Search document
 
-Migration `0001_registry` bật `pg_trgm`, tạo `search_text` và generated `search_vector` với cấu hình `simple`, cùng hai GIN indexes. SQL triggers tái tạo document khi thay đổi service, server hoặc ports/aliases/tags/endpoints/commands; migration `0005_search_triton_models` bổ sung Triton model names và migration `0006_service_metadata` bổ sung Run Command/Komodo Path. Vì vậy có thể tìm trực tiếp bằng tên model, run command hoặc Komodo path. Cập nhật search index và lượt truy cập không làm thay đổi thời gian chỉnh sửa registry.
+Migration `0001_registry` bật `pg_trgm`, tạo `search_text` và generated `search_vector` với cấu hình `simple`, cùng hai GIN indexes. SQL triggers tái tạo document khi thay đổi service, server hoặc ports/aliases/tags/endpoints/commands; migration `0005_search_triton_models` bổ sung Triton model names, `0006_service_metadata` bổ sung Run Command/Komodo Path và `0007_rabbitmq_consumers` bổ sung các đích RabbitMQ consumer. Vì vậy có thể tìm trực tiếp bằng tên model, run command, Komodo path hoặc queue RabbitMQ. Cập nhật search index và lượt truy cập không làm thay đổi thời gian chỉnh sửa registry.
 
 Triggers là một phần có phiên bản của migration, không được tạo bằng `Base.metadata.create_all()`. Không dùng create_all thay cho Alembic. Database user chạy migration phải có quyền tạo extension `pg_trgm` hoặc extension phải được quản trị viên cài trước.
 

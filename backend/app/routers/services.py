@@ -5,7 +5,7 @@ from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import get_session
-from app.models import Server, Service, ServiceAlias, ServiceCommand, ServiceDependency, ServiceEndpoint, ServicePort, ServiceTag
+from app.models import Server, Service, ServiceAlias, ServiceCommand, ServiceDependency, ServiceEndpoint, ServicePort, ServiceRabbitMqConsumer, ServiceTag
 from app.schemas.common import AccessRead, Page
 from app.schemas.registry import ServiceInput, ServiceRead, ServiceReference, ServiceSummary, Status
 from app.services.registry import service_from_input
@@ -21,6 +21,7 @@ SERVICE_LOAD_OPTIONS = (
     selectinload(Service.ports),
     selectinload(Service.commands),
     selectinload(Service.endpoints),
+    selectinload(Service.rabbitmq_consumers),
 )
 
 
@@ -172,7 +173,7 @@ def update_service(service_id: UUID, payload: ServiceInput, session: Session = D
     if session.get(Server, payload.server_id) is None:
         raise HTTPException(status_code=422, detail="server_id does not reference an existing server")
     _validate_dependencies(session, payload.dependency_ids, service_id)
-    values = payload.model_dump(exclude={"aliases", "tags", "ports", "commands", "endpoints", "dependency_ids"})
+    values = payload.model_dump(exclude={"aliases", "tags", "ports", "commands", "endpoints", "rabbitmq_consumers", "dependency_ids"})
     for field, value in values.items():
         setattr(service, field, value)
     # Clear first so replacing a value with the same unique alias/tag/port does
@@ -182,12 +183,14 @@ def update_service(service_id: UUID, payload: ServiceInput, session: Session = D
     service.ports.clear()
     service.commands.clear()
     service.endpoints.clear()
+    service.rabbitmq_consumers.clear()
     session.flush()
     service.aliases.extend(ServiceAlias(alias=alias) for alias in payload.aliases)
     service.tags.extend(ServiceTag(tag=tag) for tag in payload.tags)
     service.ports.extend(ServicePort(**item.model_dump()) for item in payload.ports)
     service.commands.extend(ServiceCommand(**item.model_dump()) for item in payload.commands)
     service.endpoints.extend(ServiceEndpoint(**item.model_dump()) for item in payload.endpoints)
+    service.rabbitmq_consumers.extend(ServiceRabbitMqConsumer(**item.model_dump()) for item in payload.rabbitmq_consumers)
     session.execute(delete(ServiceDependency).where(ServiceDependency.service_id == service_id))
     session.add_all(ServiceDependency(service_id=service_id, dependency_id=target) for target in payload.dependency_ids)
     remember_tags(session, payload.tags)

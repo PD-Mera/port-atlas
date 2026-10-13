@@ -1,7 +1,7 @@
-from app.models import Service, ServiceAlias, ServiceCommand, ServiceEndpoint, ServicePort, ServiceTag
+from app.models import Service, ServiceAlias, ServiceCommand, ServiceEndpoint, ServicePort, ServiceRabbitMqConsumer, ServiceTag
 from app.schemas.registry import ServiceInput
 
-NESTED_FIELDS = {"aliases", "tags", "ports", "commands", "endpoints", "dependency_ids"}
+NESTED_FIELDS = {"aliases", "tags", "ports", "commands", "endpoints", "rabbitmq_consumers", "dependency_ids"}
 
 
 def service_from_input(data: ServiceInput) -> Service:
@@ -12,4 +12,5 @@ def service_from_input(data: ServiceInput) -> Service:
     service.ports = [ServicePort(**port.model_dump()) for port in data.ports]
     service.commands = [ServiceCommand(**command.model_dump()) for command in data.commands]
     service.endpoints = [ServiceEndpoint(**endpoint.model_dump()) for endpoint in data.endpoints]
+    service.rabbitmq_consumers = [ServiceRabbitMqConsumer(**consumer.model_dump()) for consumer in data.rabbitmq_consumers]
     return service

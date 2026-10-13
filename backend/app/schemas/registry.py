@@ -23,6 +23,12 @@ def validate_http_url(value: str) -> str:
     return normalized
 
 
+def validate_rabbitmq_host(value: str) -> str:
+    if "://" in value or "@" in value or "/" in value:
+        raise ValueError("RabbitMQ host must not contain a URI scheme, credentials or path")
+    return value
+
+
 def normalize_labels(values: list[str]) -> list[str]:
     result: list[str] = []
     seen: set[str] = set()
@@ -45,6 +51,10 @@ Protocol = Literal["tcp", "udp", "http", "https", "grpc", "amqp", "amqps", "redi
 Status = Literal["unknown", "running", "stopped", "degraded"]
 CommandType = Literal["ssh", "start", "stop", "restart", "logs", "custom"]
 EndpointType = Literal["endpoint", "swagger", "management", "healthcheck", "metrics", "other"]
+RabbitMqProtocol = Literal["amqp", "amqps"]
+RabbitMqHost = Annotated[str, Field(min_length=1, max_length=253), AfterValidator(validate_rabbitmq_host)]
+RabbitMqValue = Annotated[str, Field(min_length=1, max_length=255)]
+RabbitMqOptionalValue = Annotated[str, Field(max_length=255)] | None
 
 
 class ServerInput(Schema):
@@ -150,6 +160,28 @@ class EndpointRead(EndpointInput):
     id: UUID
 
 
+class RabbitMqConsumerInput(Schema):
+    host: RabbitMqHost
+    port: PortNumber = 5672
+    protocol: RabbitMqProtocol = "amqp"
+    virtual_host: RabbitMqValue = "/"
+    queue: RabbitMqValue
+    exchange: RabbitMqOptionalValue = None
+    routing_key: RabbitMqOptionalValue = None
+    consumer_tag: RabbitMqOptionalValue = None
+
+    @field_validator("exchange", "routing_key", "consumer_tag", mode="before")
+    @classmethod
+    def clean_optional_values(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
+
+
+class RabbitMqConsumerRead(RabbitMqConsumerInput):
+    id: UUID
+
+
 class ServiceFields(Schema):
     server_id: UUID
     name: Name
@@ -170,6 +202,7 @@ class ServiceFields(Schema):
     management_url: URL | None = None
     owner: Annotated[str, Field(max_length=200)] | None = None
     notes: Description | None = None
+    rabbitmq_consumers: list[RabbitMqConsumerInput] = Field(default_factory=list, max_length=100)
 
 
 class ServiceInput(ServiceFields):
@@ -220,6 +253,17 @@ class ServiceInput(ServiceFields):
             raise ValueError("Duplicate port/protocol/name")
         return values
 
+    @field_validator("rabbitmq_consumers")
+    @classmethod
+    def unique_rabbitmq_consumers(cls, values: list[RabbitMqConsumerInput]) -> list[RabbitMqConsumerInput]:
+        keys = [(
+            value.host.lower(), value.port, value.protocol, value.virtual_host,
+            value.queue, value.exchange, value.routing_key, value.consumer_tag,
+        ) for value in values]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Duplicate RabbitMQ consumer binding")
+        return values
+
 
 class ServiceReference(Schema):
     id: UUID
@@ -239,6 +283,7 @@ class ServiceRead(ServiceFields, Record):
     ports: list[PortRead]
     commands: list[CommandRead]
     endpoints: list[EndpointRead]
+    rabbitmq_consumers: list[RabbitMqConsumerRead] = Field(default_factory=list)
     last_accessed_at: datetime | None
     access_count: int
 

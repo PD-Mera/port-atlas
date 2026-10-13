@@ -94,6 +94,9 @@ class Service(IdentityMixin, TimestampMixin, Base):
     tags: Mapped[list["ServiceTag"]] = relationship(back_populates="service", cascade="all, delete-orphan", passive_deletes=True)
     commands: Mapped[list["ServiceCommand"]] = relationship(back_populates="service", cascade="all, delete-orphan", passive_deletes=True)
     endpoints: Mapped[list["ServiceEndpoint"]] = relationship(back_populates="service", cascade="all, delete-orphan", passive_deletes=True)
+    rabbitmq_consumers: Mapped[list["ServiceRabbitMqConsumer"]] = relationship(
+        back_populates="service", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class SavedServiceType(Base):
@@ -172,3 +175,22 @@ class ServiceEndpoint(IdentityMixin, Base):
     url: Mapped[str] = mapped_column(String(2048))
     endpoint_type: Mapped[str] = mapped_column(String(20), server_default="endpoint")
     service: Mapped[Service] = relationship(back_populates="endpoints")
+
+
+class ServiceRabbitMqConsumer(IdentityMixin, Base):
+    __tablename__ = "service_rabbitmq_consumers"
+    __table_args__ = (
+        CheckConstraint("port BETWEEN 1 AND 65535", name="port_range"),
+        CheckConstraint("protocol IN ('amqp','amqps')", name="protocol_values"),
+    )
+
+    service_id: Mapped[UUID] = mapped_column(ForeignKey("services.id", ondelete="CASCADE"), index=True)
+    host: Mapped[str] = mapped_column(String(253))
+    port: Mapped[int] = mapped_column(Integer, server_default="5672")
+    protocol: Mapped[str] = mapped_column(String(10), server_default="amqp")
+    virtual_host: Mapped[str] = mapped_column(String(255), server_default="/")
+    queue: Mapped[str] = mapped_column(String(255))
+    exchange: Mapped[str | None] = mapped_column(String(255))
+    routing_key: Mapped[str | None] = mapped_column(String(255))
+    consumer_tag: Mapped[str | None] = mapped_column(String(255))
+    service: Mapped[Service] = relationship(back_populates="rabbitmq_consumers")
